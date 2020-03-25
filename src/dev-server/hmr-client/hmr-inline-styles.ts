@@ -1,7 +1,6 @@
 import * as d from '../../declarations';
 import { isTemplate, hasShadowRoot, isElement } from './hmr-util';
 
-
 export const hmrInlineStyles = (elm: Element, versionId: string, stylesUpdated: d.HmrStyleUpdate[]) => {
   if (isElement(elm) && elm.nodeName.toLowerCase() === 'style') {
     stylesUpdated.forEach(styleUpdated => {
@@ -23,16 +22,19 @@ export const hmrInlineStyles = (elm: Element, versionId: string, stylesUpdated: 
     }
   }
 
-  return stylesUpdated.map(s => s.styleTag).reduce((arr, v) => {
-    if (arr.indexOf(v) === -1) {
-      arr.push(v);
-    }
-    return arr;
-  }, []).sort();
+  return stylesUpdated
+    .map(s => s.styleTag)
+    .reduce((arr, v) => {
+      if (arr.indexOf(v) === -1) {
+        arr.push(v);
+      }
+      return arr;
+    }, [])
+    .sort();
 };
 
 const hmrStyleElement = (elm: Element, versionId: string, stylesUpdated: d.HmrStyleUpdate) => {
-  const styleId = elm.getAttribute('s-id');
+  const styleId = elm.getAttribute('sty-id');
   if (styleId === stylesUpdated.styleId && stylesUpdated.styleText) {
     // if we made it this far then it's a match!
     // update the new style text

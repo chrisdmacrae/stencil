@@ -44,19 +44,6 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Style Modes",
-      "args": [
-        "${workspaceFolder}/bin/stencil",
-        "build",
-        "--dev",
-        "--config",
-        "${workspaceFolder}/test/style-modes/stencil.config.ts"
-      ],
-      "protocol": "inspector"
-    },
-    {
-      "type": "node",
-      "request": "launch",
       "name": "Hello World",
       "args": [
         "${workspaceFolder}/bin/stencil",
@@ -65,38 +52,6 @@
         "--debug",
         "--max-workers=0",
         "--prerender",
-        "--config",
-        "${workspaceFolder}/test/hello-world/stencil.config.ts"
-      ],
-      "protocol": "inspector"
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Hello World NEXT",
-      "args": [
-        "${workspaceFolder}/bin/stencil",
-        "build",
-        "--next",
-        "--dev",
-        "--watch",
-        "--serve",
-        "--max-workers=0",
-        "--config",
-        "${workspaceFolder}/test/hello-world/stencil.config.ts"
-      ],
-      "protocol": "inspector"
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Hello World Prerender NEXT",
-      "args": [
-        "${workspaceFolder}/bin/stencil",
-        "build",
-        "--next",
-        "--prerender",
-        "--max-workers=0",
         "--config",
         "${workspaceFolder}/test/hello-world/stencil.config.ts"
       ],
@@ -114,12 +69,11 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Hello VDom NEXT",
+      "name": "Hello VDom",
       "args": [
         "${workspaceFolder}/bin/stencil",
         "build",
         "--watch",
-        "--next",
         "--debug",
         "--dev",
         "--config",
@@ -145,6 +99,20 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Ionic App",
+      "args": [
+        "${workspaceFolder}/bin/stencil",
+        "build",
+        "--dev",
+        "--max-workers=0",
+        "--config",
+        "${workspaceFolder}/test/ionic-app/stencil.config.ts"
+      ],
+      "protocol": "inspector"
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Prerender Shadow",
       "args": [
         "${workspaceFolder}/bin/stencil",
@@ -164,7 +132,8 @@
       "args": [
         "${workspaceFolder}/bin/stencil",
         "build",
-        "--dev",
+        // "--dev",
+        "--max-workers=0",
         "--config",
         "${workspaceFolder}/test/end-to-end/stencil.config.ts"
       ],
@@ -199,11 +168,10 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Todo App NEXT",
+      "name": "Todo App",
       "args": [
         "${workspaceFolder}/bin/stencil",
         "build",
-        "--next",
         "--dev",
         "--watch",
         "--serve",
@@ -236,23 +204,7 @@
       "args": [
         "${workspaceFolder}/bin/stencil",
         "build",
-        "--prerender",
-        "--max-workers=1",
-        "--debug",
-        "--config",
-        "${workspaceFolder}/../stencil-site/stencil.config.ts"
-      ],
-      "protocol": "inspector"
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Stencil Site Prerender NEXT",
-      "args": [
-        "${workspaceFolder}/bin/stencil",
-        "build",
         "--max-workers=0",
-        "--next",
         "--debug",
         "--config",
         "${workspaceFolder}/../stencil-site/stencil.config.ts"
@@ -281,8 +233,7 @@
       "args": [
         "${workspaceFolder}/bin/stencil",
         "build",
-        "--max-workers=1",
-        "--watch",
+        "--max-workers=0",
         "--dev",
         "--config",
         "${workspaceFolder}/test/karma/stencil.config.ts"
@@ -295,22 +246,6 @@
       "name": "Karma Prerender",
       "args": [
         "${workspaceFolder}/test/karma/test-prerender/prerender.js"
-      ],
-      "protocol": "inspector"
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "Karma NEXT",
-      "args": [
-        "${workspaceFolder}/bin/stencil",
-        "build",
-        "--next",
-        "--max-workers=0",
-        "--watch",
-        "--dev",
-        "--config",
-        "${workspaceFolder}/test/karma/stencil.config.ts"
       ],
       "protocol": "inspector"
     }

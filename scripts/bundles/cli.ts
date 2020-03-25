@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
 import { join } from 'path';
-import resolve from 'rollup-plugin-node-resolve';
-import commonjs from 'rollup-plugin-commonjs';
+import rollupCommonjs from '@rollup/plugin-commonjs';
+import rollupResolve from '@rollup/plugin-node-resolve';
 import { aliasPlugin } from './plugins/alias-plugin';
 import { gracefulFsPlugin } from './plugins/graceful-fs-plugin';
 import { replacePlugin } from './plugins/replace-plugin';
@@ -9,9 +9,8 @@ import { writePkgJson } from '../utils/write-pkg-json';
 import { BuildOptions } from '../utils/options';
 import { RollupOptions } from 'rollup';
 
-
 export async function cli(opts: BuildOptions) {
-  const inputDir = join(opts.transpiledDir, 'cli_next');
+  const inputDir = join(opts.transpiledDir, 'cli');
 
   // create public d.ts
   let dts = await fs.readFile(join(inputDir, 'public.d.ts'), 'utf8');
@@ -23,7 +22,7 @@ export async function cli(opts: BuildOptions) {
     name: '@stencil/core/cli',
     description: 'Stencil CLI.',
     main: 'index.js',
-    types: 'index.d.ts'
+    types: 'index.d.ts',
   });
 
   const external = [
@@ -34,6 +33,7 @@ export async function cli(opts: BuildOptions) {
     'crypto',
     'events',
     'fs',
+    'https',
     'os',
     'path',
     'readline',
@@ -51,76 +51,81 @@ export async function cli(opts: BuildOptions) {
       format: 'cjs',
       file: join(opts.output.cliDir, 'index.js'),
       esModule: false,
+      preferConst: true,
     },
     external,
     plugins: [
       {
         name: 'cliImportResolverPlugin',
         resolveId(importee) {
-          if (importee === '@compiler') {
+          if (importee === '@stencil/core/compiler') {
             return {
               id: '../compiler/stencil.js',
-              external: true
-            }
+              external: true,
+            };
           }
-          if (importee === '@dev-server') {
+          if (importee === '@stencil/core/dev-server') {
             return {
               id: '../dev-server/index.js',
-              external: true
-            }
+              external: true,
+            };
           }
-          if (importee === '@mock-doc') {
+          if (importee === '@stencil/core/mock-doc') {
             return {
               id: '../mock-doc/index.js',
-              external: true
-            }
+              external: true,
+            };
           }
           return null;
-        }
+        },
       },
       gracefulFsPlugin(),
       aliasPlugin(opts),
       replacePlugin(opts),
-      resolve({
-        preferBuiltins: true
+      rollupResolve({
+        preferBuiltins: true,
       }),
-      commonjs(),
-    ]
+      rollupCommonjs(),
+    ],
   };
 
   const cliWorkerBundle: RollupOptions = {
-    input: join(inputDir, 'worker/index.js'),
+    input: join(inputDir, 'worker', 'index.js'),
     output: {
       format: 'cjs',
       file: join(opts.output.cliDir, 'cli-worker.js'),
       esModule: false,
+      preferConst: true,
     },
     external,
     plugins: [
       {
         name: 'cliWorkerImportResolverPlugin',
         resolveId(importee) {
-          if (importee === '@mock-doc') {
+          if (importee === '@stencil/core/compiler') {
+            return {
+              id: '../compiler/stencil.js',
+              external: true,
+            };
+          }
+          if (importee === '@stencil/core/mock-doc') {
             return {
               id: '../mock-doc/index.js',
-              external: true
-            }
+              external: true,
+            };
           }
           return null;
-        }
+        },
       },
       gracefulFsPlugin(),
       aliasPlugin(opts),
       replacePlugin(opts),
-      resolve({
-        preferBuiltins: true
+      rollupResolve({
+        preferBuiltins: true,
       }),
-      commonjs(),
-    ]
+      rollupCommonjs(),
+    ],
   };
 
-  return [
-    cliBundle,
-    cliWorkerBundle,
-  ];
+  return [cliBundle, cliWorkerBundle];
 }

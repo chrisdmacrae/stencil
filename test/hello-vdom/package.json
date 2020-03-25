@@ -1,9 +1,13 @@
 {
   "name": "@stencil/hello-vdom",
   "private": true,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "collection": "./dist/collection/collection-manifest.json",
+  "types": "./dist/types/index.d.ts",
   "scripts": {
     "build": "node ../../bin/stencil build",
-    "start": "node ../../bin/stencil build --dev --watch --serve --next",
+    "start": "node ../../bin/stencil build --dev --watch --serve",
     "start.prod": "node ../../bin/stencil build --watch --serve"
   }
 }

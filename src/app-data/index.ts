@@ -1,6 +1,5 @@
 import { BuildConditionals } from '@stencil/core/internal';
 
-
 export const BUILD: BuildConditionals = /* default */ {
   allRenderFn: false,
   cmpDidLoad: true,
@@ -25,7 +24,6 @@ export const BUILD: BuildConditionals = /* default */ {
   member: true,
   method: true,
   mode: true,
-  noVdomRender: true,
   observeAttribute: true,
   prop: true,
   propMutable: true,
@@ -33,6 +31,7 @@ export const BUILD: BuildConditionals = /* default */ {
   scoped: true,
   shadowDom: true,
   slot: true,
+  cssAnnotations: true,
   state: true,
   style: true,
   svg: true,
@@ -44,6 +43,7 @@ export const BUILD: BuildConditionals = /* default */ {
   vdomKey: true,
   vdomListener: true,
   vdomRef: true,
+  vdomPropOrAttr: true,
   vdomRender: true,
   vdomStyle: true,
   vdomText: true,
@@ -55,12 +55,29 @@ export const BUILD: BuildConditionals = /* default */ {
   isTesting: false,
   hydrateServerSide: false,
   hydrateClientSide: false,
+  lifecycleDOMEvents: false,
   lazyLoad: false,
   profile: false,
   slotRelocation: true,
   appendChildSlotFix: false,
   cloneNodeFix: false,
-  lifecycleDOMEvents: false,
+  hydratedAttribute: false,
+  hydratedClass: true,
+  safari10: true,
+  scriptDataOpts: true,
+  shadowDomShim: true,
+  slotChildNodesFix: false,
+  propBoolean: true,
+  propNumber: true,
+  propString: true,
+  cssVarShim: false,
+  constructableCSS: true,
+  cmpShouldUpdate: true,
+  devTools: false,
+  dynamicImportShim: false,
+  shadowDelegatesFocus: true,
+  initializeNextTick: false,
+  asyncLoading: false,
 };
 
 export const NAMESPACE = /* default */ 'app' as string;

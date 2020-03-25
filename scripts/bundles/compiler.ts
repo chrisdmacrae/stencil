@@ -1,24 +1,23 @@
 import fs from 'fs-extra';
 import { join } from 'path';
-import nodeResolve from 'rollup-plugin-node-resolve';
-import commonjs from 'rollup-plugin-commonjs';
-import json from 'rollup-plugin-json';
+import rollupCommonjs from '@rollup/plugin-commonjs';
+import rollupJson from '@rollup/plugin-json';
+import rollupNodeResolve from '@rollup/plugin-node-resolve';
 import { aliasPlugin } from './plugins/alias-plugin';
-import { inlinedCompilerPluginsPlugin } from './plugins/inlined-compiler-plugins-plugin';
-import { sysModulesPlugin } from './plugins/sys-modules-plugin';
-import { replacePlugin } from './plugins/replace-plugin';
-import { parse5Plugin } from './plugins/parse5-plugin';
-import { sizzlePlugin } from './plugins/sizzle-plugin';
 import { getBanner } from '../utils/banner';
+import { inlinedCompilerPluginsPlugin } from './plugins/inlined-compiler-plugins-plugin';
+import { moduleDebugPlugin } from './plugins/module-debug-plugin';
+import { parse5Plugin } from './plugins/parse5-plugin';
+import { replacePlugin } from './plugins/replace-plugin';
+import { sizzlePlugin } from './plugins/sizzle-plugin';
+import { sysModulesPlugin } from './plugins/sys-modules-plugin';
 import { writePkgJson } from '../utils/write-pkg-json';
 import { BuildOptions } from '../utils/options';
-import { RollupOptions } from 'rollup';
+import { RollupOptions, OutputChunk } from 'rollup';
 import terser from 'terser';
-import { moduleDebugPlugin } from './plugins/moduleDebugPlugin';
-
 
 export async function compiler(opts: BuildOptions) {
-  const inputDir = join(opts.transpiledDir, 'compiler_next');
+  const inputDir = join(opts.transpiledDir, 'compiler');
 
   const compilerFileName = 'stencil.js';
   const compilerDtsName = compilerFileName.replace('.js', '.d.ts');
@@ -33,21 +32,18 @@ export async function compiler(opts: BuildOptions) {
     name: '@stencil/core/compiler',
     description: 'Stencil Compiler.',
     main: compilerFileName,
-    types: compilerDtsName
+    types: compilerDtsName,
   });
 
-
-  const compilerIntro = fs.readFileSync(join(opts.bundleHelpersDir, 'compiler-intro.js'), 'utf8');
   const cjsIntro = fs.readFileSync(join(opts.bundleHelpersDir, 'compiler-cjs-intro.js'), 'utf8');
   const cjsOutro = fs.readFileSync(join(opts.bundleHelpersDir, 'compiler-cjs-outro.js'), 'utf8');
-
 
   const compilerBundle: RollupOptions = {
     input: join(inputDir, 'index.js'),
     output: {
       format: 'cjs',
       file: join(opts.output.compilerDir, compilerFileName),
-      intro: cjsIntro + compilerIntro,
+      intro: cjsIntro,
       outro: cjsOutro,
       strict: false,
       banner: getBanner(opts, 'Stencil Compiler', true),
@@ -56,46 +52,47 @@ export async function compiler(opts: BuildOptions) {
     },
     plugins: [
       {
+        name: 'compilerMockDocResolvePlugin',
         resolveId(id) {
-          if (id === '@mock-doc') {
+          if (id === '@stencil/core/mock-doc') {
             return join(opts.transpiledDir, 'mock-doc', 'index.js');
           }
           return null;
-        }
+        },
       },
       inlinedCompilerPluginsPlugin(opts, inputDir),
       parse5Plugin(opts),
       sizzlePlugin(opts),
       aliasPlugin(opts),
       sysModulesPlugin(inputDir),
-      nodeResolve({
-        preferBuiltins: false
+      rollupNodeResolve({
+        preferBuiltins: false,
       }),
-      commonjs(),
+      rollupCommonjs(),
       replacePlugin(opts),
-      json() as any,
+      rollupJson({
+        preferConst: true,
+      }),
       moduleDebugPlugin(opts),
-      // {
-      //   generateBundle(_, bundleFiles) {
-      //     Object.keys(bundleFiles).forEach(fileName => {
-      //       if (opts.isProd) {
-      //         const bundle = bundleFiles[fileName] as OutputChunk;
-      //         bundle.code = minifyStencilCompiler(bundle.code)
-      //       }
-      //     });
-      //   }
-      // }
+      {
+        name: 'compilerMinify',
+        async generateBundle(_, bundleFiles) {
+          if (opts.isProd) {
+            const compilerFilename = Object.keys(bundleFiles).find(f => f.includes('stencil'));
+            const compilerBundle = bundleFiles[compilerFilename] as OutputChunk;
+            const minified = minifyStencilCompiler(compilerBundle.code);
+            await fs.writeFile(join(opts.output.compilerDir, compilerFilename.replace('.js', '.min.js')), minified);
+          }
+        },
+      },
     ],
     treeshake: {
-      moduleSideEffects: false
-    }
+      moduleSideEffects: false,
+    },
   };
 
-  return [
-    compilerBundle,
-  ];
-};
-
+  return [compilerBundle];
+}
 
 function minifyStencilCompiler(code: string) {
   const opts: terser.MinifyOptions = {
@@ -106,7 +103,7 @@ function minifyStencilCompiler(code: string) {
     },
     output: {
       ecma: 7,
-    }
+    },
   };
 
   const minifyResults = terser.minify(code, opts);

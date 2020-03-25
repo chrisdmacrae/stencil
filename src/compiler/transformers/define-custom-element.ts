@@ -1,9 +1,8 @@
 import * as d from '../../declarations';
 import { convertValueToLiteral } from './transform-utils';
 import { DEFINE_CUSTOM_ELEMENT, RUNTIME_APIS, addCoreRuntimeApi } from './core-runtime-apis';
-import { formatComponentRuntimeMeta } from '../app-core/format-component-runtime-meta';
+import { formatComponentRuntimeMeta } from '@utils';
 import ts from 'typescript';
-
 
 export const defineCustomElement = (tsSourceFile: ts.SourceFile, moduleFile: d.Module, transformOpts: d.TransformOptions) => {
   let statements = tsSourceFile.statements.slice();
@@ -11,10 +10,10 @@ export const defineCustomElement = (tsSourceFile: ts.SourceFile, moduleFile: d.M
   statements.push(
     ...moduleFile.cmps.map(cmp => {
       return addDefineCustomElement(moduleFile, cmp);
-    })
+    }),
   );
 
-  if (transformOpts.module === ts.ModuleKind.CommonJS) {
+  if (transformOpts.module === 'cjs') {
     // remove commonjs exports keyword from component classes
     statements = removeComponentCjsExport(statements, moduleFile);
   }
@@ -22,22 +21,15 @@ export const defineCustomElement = (tsSourceFile: ts.SourceFile, moduleFile: d.M
   return ts.updateSourceFileNode(tsSourceFile, statements);
 };
 
-
 const addDefineCustomElement = (moduleFile: d.Module, compilerMeta: d.ComponentCompilerMeta) => {
   if (compilerMeta.isPlain) {
     // add customElements.define('cmp-a', CmpClass);
     return ts.createStatement(
       ts.createCall(
-        ts.createPropertyAccess(
-          ts.createIdentifier('customElements'),
-          ts.createIdentifier('define')
-        ),
+        ts.createPropertyAccess(ts.createIdentifier('customElements'), ts.createIdentifier('define')),
         [],
-        [
-          ts.createLiteral(compilerMeta.tagName),
-          ts.createIdentifier(compilerMeta.componentClassName)
-        ]
-      )
+        [ts.createLiteral(compilerMeta.tagName), ts.createIdentifier(compilerMeta.componentClassName)],
+      ),
     );
   }
 
@@ -47,23 +39,11 @@ const addDefineCustomElement = (moduleFile: d.Module, compilerMeta: d.ComponentC
   const liternalCmpClassName = ts.createIdentifier(compilerMeta.componentClassName);
   const liternalMeta = convertValueToLiteral(compactMeta);
 
-  return ts.createStatement(
-    ts.createCall(
-      ts.createIdentifier(DEFINE_CUSTOM_ELEMENT),
-      [],
-      [
-        liternalCmpClassName,
-        liternalMeta
-      ]
-    )
-  );
+  return ts.createStatement(ts.createCall(ts.createIdentifier(DEFINE_CUSTOM_ELEMENT), [], [liternalCmpClassName, liternalMeta]));
 };
 
-
 const removeComponentCjsExport = (statements: ts.Statement[], moduleFile: d.Module) => {
-  const cmpClassNames = new Set<string>(
-    moduleFile.cmps.map(cmp => cmp.componentClassName)
-  );
+  const cmpClassNames = new Set<string>(moduleFile.cmps.map(cmp => cmp.componentClassName));
 
   return statements.filter(s => {
     if (s.kind === ts.SyntaxKind.ExpressionStatement) {

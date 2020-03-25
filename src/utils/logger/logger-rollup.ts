@@ -1,10 +1,10 @@
 import * as d from '../../declarations';
 import { buildWarn } from '../message-utils';
+import { isString, toTitleCase } from '../helpers';
 import { splitLineBreaks } from './logger-utils';
-import { toTitleCase } from '../helpers';
+import { RollupError } from 'rollup';
 
-
-export const loadRollupDiagnostics = (compilerCtx: d.CompilerCtx, buildCtx: d.BuildCtx, rollupError: any) => {
+export const loadRollupDiagnostics = (config: d.Config, compilerCtx: d.CompilerCtx, buildCtx: d.BuildCtx, rollupError: RollupError) => {
   const formattedCode = formatErrorCode(rollupError.code);
 
   const diagnostic: d.Diagnostic = {
@@ -16,10 +16,10 @@ export const loadRollupDiagnostics = (compilerCtx: d.CompilerCtx, buildCtx: d.Bu
     messageText: formattedCode,
     relFilePath: null,
     absFilePath: null,
-    lines: []
+    lines: [],
   };
 
-  if (rollupError.stack) {
+  if (config.logLevel === 'debug' && rollupError.stack) {
     diagnostic.messageText = rollupError.stack;
   } else if (rollupError.message) {
     diagnostic.messageText = rollupError.message;
@@ -29,86 +29,85 @@ export const loadRollupDiagnostics = (compilerCtx: d.CompilerCtx, buildCtx: d.Bu
     diagnostic.messageText += ` (plugin: ${rollupError.plugin}${rollupError.hook ? `, ${rollupError.hook}` : ''})`;
   }
 
-  if (rollupError.loc != null && typeof rollupError.loc.file === 'string') {
+  const loc = rollupError.loc;
+  if (loc != null) {
+    const srcFile = loc.file || rollupError.id;
+    if (isString(srcFile)) {
+      try {
+        const sourceText = compilerCtx.fs.readFileSync(srcFile);
+        if (sourceText) {
+          diagnostic.absFilePath = srcFile;
 
-    try {
-      const sourceText = compilerCtx.fs.readFileSync(rollupError.loc.file);
-      if (sourceText) {
-        diagnostic.absFilePath = rollupError.loc.file;
+          try {
+            const srcLines = splitLineBreaks(sourceText);
 
-        try {
-          const srcLines = splitLineBreaks(sourceText);
+            const errorLine: d.PrintLine = {
+              lineIndex: loc.line - 1,
+              lineNumber: loc.line,
+              text: srcLines[loc.line - 1],
+              errorCharStart: loc.column,
+              errorLength: 0,
+            };
 
-          const errorLine: d.PrintLine = {
-            lineIndex: rollupError.loc.line - 1,
-            lineNumber: rollupError.loc.line,
-            text: srcLines[rollupError.loc.line - 1],
-            errorCharStart: rollupError.loc.column,
-            errorLength: 0
-          };
+            diagnostic.lineNumber = errorLine.lineNumber;
+            diagnostic.columnNumber = errorLine.errorCharStart;
 
-          diagnostic.lineNumber = errorLine.lineNumber;
-          diagnostic.columnNumber = errorLine.errorCharStart;
-
-          const highlightLine = errorLine.text.substr(rollupError.loc.column);
-          for (let i = 0; i < highlightLine.length; i++) {
-            if (charBreak.has(highlightLine.charAt(i))) {
-              break;
+            const highlightLine = errorLine.text.substr(loc.column);
+            for (let i = 0; i < highlightLine.length; i++) {
+              if (charBreak.has(highlightLine.charAt(i))) {
+                break;
+              }
+              errorLine.errorLength++;
             }
-            errorLine.errorLength++;
+
+            diagnostic.lines.push(errorLine);
+
+            if (errorLine.errorLength === 0 && errorLine.errorCharStart > 0) {
+              errorLine.errorLength = 1;
+              errorLine.errorCharStart--;
+            }
+
+            if (errorLine.lineIndex > 0) {
+              const previousLine: d.PrintLine = {
+                lineIndex: errorLine.lineIndex - 1,
+                lineNumber: errorLine.lineNumber - 1,
+                text: srcLines[errorLine.lineIndex - 1],
+                errorCharStart: -1,
+                errorLength: -1,
+              };
+
+              diagnostic.lines.unshift(previousLine);
+            }
+
+            if (errorLine.lineIndex + 1 < srcLines.length) {
+              const nextLine: d.PrintLine = {
+                lineIndex: errorLine.lineIndex + 1,
+                lineNumber: errorLine.lineNumber + 1,
+                text: srcLines[errorLine.lineIndex + 1],
+                errorCharStart: -1,
+                errorLength: -1,
+              };
+
+              diagnostic.lines.push(nextLine);
+            }
+          } catch (e) {
+            diagnostic.messageText += `\nError parsing: ${diagnostic.absFilePath}, line: ${loc.line}, column: ${loc.column}`;
+            diagnostic.debugText = sourceText;
           }
-
-          diagnostic.lines.push(errorLine);
-
-          if (errorLine.errorLength === 0 && errorLine.errorCharStart > 0) {
-            errorLine.errorLength = 1;
-            errorLine.errorCharStart--;
-          }
-
-          if (errorLine.lineIndex > 0) {
-            const previousLine: d.PrintLine = {
-              lineIndex: errorLine.lineIndex - 1,
-              lineNumber: errorLine.lineNumber - 1,
-              text: srcLines[errorLine.lineIndex - 1],
-              errorCharStart: -1,
-              errorLength: -1
-            };
-
-            diagnostic.lines.unshift(previousLine);
-          }
-
-          if (errorLine.lineIndex + 1 < srcLines.length) {
-            const nextLine: d.PrintLine = {
-              lineIndex: errorLine.lineIndex + 1,
-              lineNumber: errorLine.lineNumber + 1,
-              text: srcLines[errorLine.lineIndex + 1],
-              errorCharStart: -1,
-              errorLength: -1
-            };
-
-            diagnostic.lines.push(nextLine);
-          }
-
-        } catch (e) {
-          diagnostic.messageText = `Error parsing: ${diagnostic.absFilePath}, line: ${rollupError.loc.line}, column: ${rollupError.loc.column}`;
-          diagnostic.debugText = sourceText;
+        } else if (typeof rollupError.frame === 'string') {
+          diagnostic.messageText += '\n' + rollupError.frame;
         }
-
-      } else if (typeof rollupError.frame === 'string') {
-        diagnostic.messageText += '\n' + rollupError.frame;
-      }
-
-    } catch (e) {}
+      } catch (e) {}
+    }
   }
 
   buildCtx.diagnostics.push(diagnostic);
 };
 
-
 export const createOnWarnFn = (diagnostics: d.Diagnostic[], bundleModulesFiles?: d.Module[]) => {
   const previousWarns = new Set<string>();
 
-  return function onWarningMessage(warning: { code: string, importer: string, message: string }) {
+  return function onWarningMessage(warning: { code: string; importer: string; message: string }) {
     if (warning == null || ignoreWarnCodes.has(warning.code) || previousWarns.has(warning.message)) {
       return;
     }
@@ -117,10 +116,13 @@ export const createOnWarnFn = (diagnostics: d.Diagnostic[], bundleModulesFiles?:
 
     let label = '';
     if (bundleModulesFiles) {
-      label = bundleModulesFiles.reduce((cmps, m) => {
-        cmps.push(...m.cmps);
-        return cmps;
-      }, [] as d.ComponentCompilerMeta[]).join(', ').trim();
+      label = bundleModulesFiles
+        .reduce((cmps, m) => {
+          cmps.push(...m.cmps);
+          return cmps;
+        }, [] as d.ComponentCompilerMeta[])
+        .join(', ')
+        .trim();
 
       if (label.length) {
         label += ': ';
@@ -133,23 +135,18 @@ export const createOnWarnFn = (diagnostics: d.Diagnostic[], bundleModulesFiles?:
   };
 };
 
-const ignoreWarnCodes = new Set([
-  'THIS_IS_UNDEFINED',
-  'NON_EXISTENT_EXPORT',
-  'CIRCULAR_DEPENDENCY',
-  'EMPTY_BUNDLE',
-  'UNUSED_EXTERNAL_IMPORT'
-]);
-
+const ignoreWarnCodes = new Set(['THIS_IS_UNDEFINED', 'NON_EXISTENT_EXPORT', 'CIRCULAR_DEPENDENCY', 'EMPTY_BUNDLE', 'UNUSED_EXTERNAL_IMPORT']);
 
 const charBreak = new Set([' ', '=', '.', ',', '?', ':', ';', '(', ')', '{', '}', '[', ']', '|', `'`, `"`, '`']);
 
-
 const formatErrorCode = (errorCode: any) => {
   if (typeof errorCode === 'string') {
-    return errorCode.split('_').map(c => {
-      return toTitleCase(c.toLowerCase());
-    }).join(' ');
+    return errorCode
+      .split('_')
+      .map(c => {
+        return toTitleCase(c.toLowerCase());
+      })
+      .join(' ');
   }
   return (errorCode || '').trim();
 };

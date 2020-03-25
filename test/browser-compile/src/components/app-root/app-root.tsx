@@ -1,4 +1,7 @@
 import { Component, Host, h, State } from '@stencil/core';
+import StencilTypes from '@stencil/core/compiler';
+import TypeScriptTypes from 'typescript';
+import RollupTypes from 'rollup';
 import { cssTemplatePlugin } from '../../utils/css-template-plugin';
 import { loadDeps } from '../../utils/load-deps';
 import { templates, templateList } from '../../utils/templates';
@@ -18,9 +21,11 @@ export class AppRoot {
   componentMetadata: HTMLSelectElement;
   proxy: HTMLSelectElement;
   module: HTMLSelectElement;
-  script: HTMLSelectElement;
+  target: HTMLSelectElement;
+  sourceMap: HTMLSelectElement;
   style: HTMLSelectElement;
   componentExport: HTMLSelectElement;
+  coreImportPath: HTMLSelectElement;
   build: HTMLSelectElement;
   fileTemplate: HTMLSelectElement;
   iframe: HTMLIFrameElement;
@@ -54,19 +59,21 @@ export class AppRoot {
     console.clear();
     console.log(`compile: stencil v${stencil.version}, typescript v${ts.version}`);
 
-    const opts = {
+    const opts: StencilTypes.CompileOptions = {
       file: this.file.value,
       componentExport: this.componentExport.value,
       componentMetadata: this.componentMetadata.value,
+      coreImportPath: this.coreImportPath.value !== 'null' ? this.coreImportPath.value : null,
       proxy: this.proxy.value,
       module: this.module.value,
-      script: this.script.value,
-      style: this.style.value
+      target: this.target.value,
+      sourceMap: this.sourceMap.value === 'true' ? true : this.sourceMap.value === 'inline' ? 'inline' : false,
+      style: this.style.value,
     };
 
     const results = await stencil.compile(this.sourceCodeInput.value, opts);
 
-    results.imports.forEach((imprt: string) => {
+    results.imports.forEach(imprt => {
       console.log('import:', imprt);
     });
 
@@ -97,29 +104,19 @@ export class AppRoot {
 
     this.fs.set(entryId, this.transpiledInput.value);
 
-    const inputOptions = {
+    const inputOptions: RollupTypes.InputOptions = {
       input: entryId,
       treeshake: true,
       plugins: [
-        // stencil.rollupPlugin(),
         {
+          name: 'browserPlugin',
           resolveId: (importee: string, importer: string) => {
             console.log('bundle resolveId, importee:', importee, 'importer:', importer);
-
-            if (importee.includes('.stencil-client.')) {
-              const parts = importee.split('/');
-              const filename = parts[parts.length - 1];
-              const url = `/@stencil/core/internal/client/${filename}`;
-              return {
-                id: url,
-                external: true
-              };
-            }
 
             if (importee.startsWith('.')) {
               var u = new URL(importee, 'http://url.resolve' + (importer || ''));
               console.log('bundle path resolve:', u.pathname);
-              return u.pathname;
+              return u.pathname + u.search;
             }
 
             const resolved = this.resolveLookup.get(importee);
@@ -150,8 +147,8 @@ export class AppRoot {
 			}
     };
 
-    const generateOptions = {
-      format: this.module.value,
+    const generateOptions: RollupTypes.OutputOptions = {
+      format: this.module.value as any,
     };
 
     try {
@@ -162,27 +159,33 @@ export class AppRoot {
       this.wrap = 'off';
 
       if (this.minified === 'minified') {
-        const m = stencil.getMinifyScriptOptions({
-          script: this.script.value,
-          pretty: false
+        const results = await stencil.optimizeJs({
+          input: this.bundledInput.value,
+          target: this.target.value as any,
+          pretty: false,
         });
-        const results = Terser.minify(this.bundledInput.value, m.options);
-        this.bundledInput.value = results.code;
+        this.bundledInput.value = results.output;
         this.wrap = 'on';
 
       } else if (this.minified === 'pretty') {
-        const m = stencil.getMinifyScriptOptions({
-          script: this.script.value,
-          pretty: true
+        const results = await stencil.optimizeJs({
+          input: this.bundledInput.value,
+          target: this.target.value as any,
+          pretty: true,
         });
-        const results = Terser.minify(this.bundledInput.value, m.options);
-        this.bundledInput.value = results.code;
+        this.bundledInput.value = results.output;
       }
 
       this.preview();
 
     } catch (e) {
       this.bundledInput.value = e;
+      if (e.loc && e.loc.file) {
+        this.bundledInput.value += '\n\n\n' + e.loc.file;
+      }
+      if (e.frame) {
+        this.bundledInput.value += '\n\n\n' + e.frame;
+      }
       this.wrap = 'on';
       this.iframe.contentWindow.document.body.innerHTML = '';
     }
@@ -192,6 +195,9 @@ export class AppRoot {
     this.bundledLength = this.bundledInput.value.length;
 
     this.iframe.contentWindow.location.reload();
+
+    (window as any).bundledInput = this.bundledInput.value;
+    (window as any).htmlCodeInput = this.htmlCodeInput.value;
 
     setTimeout(() => {
       const doc = this.iframe.contentDocument;
@@ -204,6 +210,10 @@ export class AppRoot {
       doc.body.innerHTML = this.htmlCodeInput.value;
     });
   }
+
+  openInWindow = () => {
+    window.open('/preview.html', '_blank');
+  };
 
   render() {
     return (
@@ -237,6 +247,7 @@ export class AppRoot {
               <select ref={el => this.componentExport = el} onInput={this.compile.bind(this)}>
                 <option value="customelement">customelement</option>
                 <option value="module">module</option>
+                <option value="null">null</option>
               </select>
             </label>
             <label>
@@ -244,37 +255,57 @@ export class AppRoot {
               <select ref={el => this.module = el} onInput={this.compile.bind(this)}>
                 <option value="esm">esm</option>
                 <option value="cjs">cjs</option>
+                <option value="null">null</option>
               </select>
             </label>
             <label>
-              <span>Script:</span>
-              <select ref={el => this.script = el} onInput={this.compile.bind(this)}>
+              <span>Target:</span>
+              <select ref={el => this.target = el} onInput={this.compile.bind(this)}>
+                <option value="latest">latest</option>
+                <option value="esnext">esnext</option>
+                <option value="es2020">es2020</option>
                 <option value="es2017">es2017</option>
                 <option value="es2015">es2015</option>
                 <option value="es5">es5</option>
-                <option value="latest">latest</option>
-                <option value="esnext">esnext</option>
+                <option value="null">null</option>
+              </select>
+            </label>
+            <label>
+              <span>Source Map:</span>
+              <select ref={el => this.sourceMap = el} onInput={this.compile.bind(this)}>
+                <option value="true">true</option>
+                <option value="inline">inline</option>
+                <option value="false">false</option>
+                <option value="null">null</option>
               </select>
             </label>
             <label>
               <span>Style:</span>
               <select ref={el => this.style = el} onInput={this.compile.bind(this)}>
                 <option value="static">static</option>
-                <option value="">null</option>
+                <option value="null">null</option>
               </select>
             </label>
             <label>
               <span>Proxy:</span>
               <select ref={el => this.proxy = el} onInput={this.compile.bind(this)}>
                 <option value="defineproperty">defineproperty</option>
-                <option value="">null</option>
+                <option value="null">null</option>
               </select>
             </label>
             <label>
               <span>Metadata:</span>
               <select ref={el => this.componentMetadata = el} onInput={this.compile.bind(this)}>
-                <option value="">null</option>
+                <option value="null">null</option>
                 <option value="compilerstatic">compilerstatic</option>
+              </select>
+            </label>
+            <label>
+              <span>Core:</span>
+              <select ref={el => this.coreImportPath = el} onInput={this.compile.bind(this)}>
+                <option value="null">null</option>
+                <option value="@stencil/core/internal/client">@stencil/core/internal/client</option>
+                <option value="@stencil/core/internal/testing">@stencil/core/internal/testing</option>
               </select>
             </label>
           </div>
@@ -350,7 +381,10 @@ export class AppRoot {
             </div>
 
           <div class="view">
-            <header>Preview</header>
+            <header>
+              Preview
+              <a href="#" onClick={this.openInWindow}>Open in window</a>
+            </header>
             <iframe ref={el => this.iframe = el}></iframe>
           </div>
         </section>
@@ -361,9 +395,6 @@ export class AppRoot {
 
 }
 
-
-
-declare const stencil: any;
-declare const ts: any;
-declare const rollup: any;
-declare const Terser: any;
+declare const stencil: typeof StencilTypes;
+declare const ts: typeof TypeScriptTypes;
+declare const rollup: typeof RollupTypes;

@@ -4,10 +4,11 @@ import { drainPrerenderQueue, initializePrerenderEntryUrls } from './prerender-q
 import { generateRobotsTxt } from './robots-txt';
 import { generateSitemapXml } from './sitemap-xml';
 import { generateTemplateHtml } from './prerender-template-html';
-import { getPrerenderConfig, validatePrerenderConfigPath } from './prerender-config';
-import { getAbsoluteBuildDir } from '../compiler/html/utils';
+import { getPrerenderConfig, validatePrerenderConfigPath, getHydrateOptions } from './prerender-config';
+import { getAbsoluteBuildDir } from '../compiler/html/html-utils';
 import { isOutputTargetWww } from '../compiler/output-targets/output-utils';
-import { NodeWorkerController } from '../sys/node_next/worker';
+import { NodeWorkerController } from '../sys/node/worker';
+
 import crypto from 'crypto';
 import fs from 'fs';
 import os from 'os';
@@ -15,12 +16,17 @@ import path from 'path';
 import readline from 'readline';
 import { URL } from 'url';
 
-
-export async function runPrerender(prcs: NodeJS.Process, cliRootDir: string, config: d.Config, devServer: d.DevServer, hydrateAppFilePath: string, componentGraph: d.BuildResultsComponentGraph, srcIndexHtmlPath: string) {
+export async function runPrerender(
+  prcs: NodeJS.Process,
+  cliRootDir: string,
+  config: d.Config,
+  devServer: d.DevServer,
+  hydrateAppFilePath: string,
+  componentGraph: d.BuildResultsComponentGraph,
+  srcIndexHtmlPath: string,
+) {
   const diagnostics: d.Diagnostic[] = [];
-  const outputTargets = config.outputTargets
-    .filter(isOutputTargetWww)
-    .filter(o => typeof o.indexHtml === 'string');
+  const outputTargets = config.outputTargets.filter(isOutputTargetWww).filter(o => typeof o.indexHtml === 'string');
 
   if (outputTargets.length === 0) {
     return diagnostics;
@@ -30,7 +36,6 @@ export async function runPrerender(prcs: NodeJS.Process, cliRootDir: string, con
     const diagnostic = buildError(diagnostics);
     diagnostic.header = `Prerender Error`;
     diagnostic.messageText = `Build results missing "hydrateAppFilePath"`;
-
   } else {
     const hydrateAppExists = fs.existsSync(hydrateAppFilePath);
     if (!hydrateAppExists) {
@@ -45,26 +50,13 @@ export async function runPrerender(prcs: NodeJS.Process, cliRootDir: string, con
 
     try {
       const cliWorkerPath = path.join(cliRootDir, 'cli-worker.js');
-      workerCtrl = new NodeWorkerController(
-        cliWorkerPath,
-        config.maxConcurrentWorkers,
-        config.logger
+      workerCtrl = new NodeWorkerController('stencil-cli-worker', cliWorkerPath, config.maxConcurrentWorkers, config.logger);
+
+      await Promise.all(
+        outputTargets.map(outputTarget => {
+          return runPrerenderOutputTarget(prcs, workerCtrl, diagnostics, config, devServer, hydrateAppFilePath, componentGraph, srcIndexHtmlPath, outputTarget);
+        }),
       );
-
-      await Promise.all(outputTargets.map(outputTarget => {
-        return runPrerenderOutputTarget(
-          prcs,
-          workerCtrl,
-          diagnostics,
-          config,
-          devServer,
-          hydrateAppFilePath,
-          componentGraph,
-          srcIndexHtmlPath,
-          outputTarget
-        );
-      }));
-
     } catch (e) {
       catchError(diagnostics, e);
     }
@@ -77,8 +69,17 @@ export async function runPrerender(prcs: NodeJS.Process, cliRootDir: string, con
   return diagnostics;
 }
 
-
-async function runPrerenderOutputTarget(prcs: NodeJS.Process, workerCtrl: NodeWorkerController, diagnostics: d.Diagnostic[], config: d.Config, devServer: d.DevServer, hydrateAppFilePath: string, componentGraph: d.BuildResultsComponentGraph, srcIndexHtmlPath: string, outputTarget: d.OutputTargetWww) {
+async function runPrerenderOutputTarget(
+  prcs: NodeJS.Process,
+  workerCtrl: NodeWorkerController,
+  diagnostics: d.Diagnostic[],
+  config: d.Config,
+  devServer: d.DevServer,
+  hydrateAppFilePath: string,
+  componentGraph: d.BuildResultsComponentGraph,
+  srcIndexHtmlPath: string,
+  outputTarget: d.OutputTargetWww,
+) {
   try {
     const timeSpan = config.logger.createTimeSpan(`prerendering started`);
 
@@ -86,6 +87,10 @@ async function runPrerenderOutputTarget(prcs: NodeJS.Process, workerCtrl: NodeWo
 
     const devServerBaseUrl = new URL(devServer.browserUrl);
     const devServerHostUrl = devServerBaseUrl.origin;
+    const prerenderConfig = getPrerenderConfig(prerenderDiagnostics, outputTarget.prerenderConfig);
+
+    const hydrateOpts = getHydrateOptions(prerenderConfig, devServerBaseUrl, diagnostics);
+
     config.logger.debug(`prerender hydrate app: ${hydrateAppFilePath}`);
     config.logger.debug(`prerender dev server: ${devServerHostUrl}`);
 
@@ -105,17 +110,17 @@ async function runPrerenderOutputTarget(prcs: NodeJS.Process, workerCtrl: NodeWo
       diagnostics: prerenderDiagnostics,
       devServerHostUrl: devServerHostUrl,
       hydrateAppFilePath: hydrateAppFilePath,
-      isDebug: (config.logLevel === 'debug'),
+      isDebug: config.logLevel === 'debug',
       logCount: 0,
-      maxConcurrency: Math.max(20, (config.maxConcurrentWorkers * 10)),
+      maxConcurrency: Math.max(20, config.maxConcurrentWorkers * 10),
       outputTarget: outputTarget,
-      prerenderConfig: getPrerenderConfig(prerenderDiagnostics, outputTarget.prerenderConfig),
+      prerenderConfig: prerenderConfig,
       prerenderConfigPath: outputTarget.prerenderConfig,
       templateId: null,
       urlsCompleted: new Set(),
       urlsPending: new Set(),
       urlsProcessing: new Set(),
-      resolve: null
+      resolve: null,
     };
 
     if (!config.flags.ci && !manager.isDebug) {
@@ -130,13 +135,13 @@ async function runPrerenderOutputTarget(prcs: NodeJS.Process, workerCtrl: NodeWo
       return;
     }
 
-    const templateHtml = await generateTemplateHtml(config, diagnostics, srcIndexHtmlPath, outputTarget);
+    const templateHtml = await generateTemplateHtml(diagnostics, manager.isDebug, srcIndexHtmlPath, outputTarget, hydrateOpts);
     if (diagnostics.length > 0 || typeof templateHtml !== 'string') {
       return;
     }
 
     manager.templateId = createPrerenderTemplate(config, templateHtml);
-    manager.componentGraphPath = createComponentGraphPath(config, componentGraph, outputTarget);
+    manager.componentGraphPath = createComponentGraphPath(componentGraph, outputTarget);
 
     await new Promise(resolve => {
       manager.resolve = resolve;
@@ -186,12 +191,10 @@ async function runPrerenderOutputTarget(prcs: NodeJS.Process, workerCtrl: NodeWo
     const statusColor = prerenderBuildErrors.length > 0 ? 'red' : 'green';
 
     timeSpan.finish(`prerendering ${statusMessage}`, statusColor, true);
-
   } catch (e) {
     catchError(diagnostics, e);
   }
 }
-
 
 function createPrerenderTemplate(config: d.Config, templateHtml: string) {
   const hash = generateContentHash(templateHtml);
@@ -202,10 +205,9 @@ function createPrerenderTemplate(config: d.Config, templateHtml: string) {
   return templateId;
 }
 
-
-function createComponentGraphPath(config: d.Config, componentGraph: d.BuildResultsComponentGraph, outputTarget: d.OutputTargetWww) {
+function createComponentGraphPath(componentGraph: d.BuildResultsComponentGraph, outputTarget: d.OutputTargetWww) {
   if (componentGraph) {
-    const content = getComponentPathContent(config, componentGraph, outputTarget);
+    const content = getComponentPathContent(componentGraph, outputTarget);
     const hash = generateContentHash(content);
     const fileName = `prerender-component-graph-${hash}.json`;
     const componentGraphPath = path.join(os.tmpdir(), fileName);
@@ -215,10 +217,9 @@ function createComponentGraphPath(config: d.Config, componentGraph: d.BuildResul
   return null;
 }
 
-
-function getComponentPathContent(config: d.Config, componentGraph: {[scopeId: string]: string[]}, outputTarget: d.OutputTargetWww) {
-  const buildDir = getAbsoluteBuildDir(config, outputTarget);
-  const object: {[key: string]: string[]} = {};
+function getComponentPathContent(componentGraph: { [scopeId: string]: string[] }, outputTarget: d.OutputTargetWww) {
+  const buildDir = getAbsoluteBuildDir(outputTarget);
+  const object: { [key: string]: string[] } = {};
   const entries = Object.entries(componentGraph);
   for (const [key, chunks] of entries) {
     object[key] = chunks.map(filename => path.join(buildDir, filename));
@@ -226,18 +227,17 @@ function getComponentPathContent(config: d.Config, componentGraph: {[scopeId: st
   return JSON.stringify(object);
 }
 
-
 function startProgressLogger(prcs: NodeJS.Process): d.ProgressLogger {
   let promise = Promise.resolve();
   const update = (text: string) => {
     text = text.substr(0, prcs.stdout.columns - 5) + '\x1b[0m';
-    return promise = promise.then(() => {
+    return (promise = promise.then(() => {
       return new Promise<any>(resolve => {
         readline.clearLine(prcs.stdout, 0);
         readline.cursorTo(prcs.stdout, 0, null);
         prcs.stdout.write(text, resolve);
       });
-    });
+    }));
   };
 
   const stop = () => {
@@ -248,13 +248,13 @@ function startProgressLogger(prcs: NodeJS.Process): d.ProgressLogger {
   prcs.stdout.write('\x1B[?25l');
   return {
     update,
-    stop
+    stop,
   };
 }
 
-
 function generateContentHash(content: string) {
-  return crypto.createHash('md5')
+  return crypto
+    .createHash('md5')
     .update(content)
     .digest('hex')
     .toLowerCase()

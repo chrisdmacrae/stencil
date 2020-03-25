@@ -1,39 +1,22 @@
 import fs from 'fs-extra';
 import { join } from 'path';
-import resolve from 'rollup-plugin-node-resolve';
-import commonjs from 'rollup-plugin-commonjs';
-import json from 'rollup-plugin-json';
+import rollupCommonjs from '@rollup/plugin-commonjs';
+import rollupJson from '@rollup/plugin-json';
+import rollupResolve from '@rollup/plugin-node-resolve';
 import { aliasPlugin } from './plugins/alias-plugin';
 import { BuildOptions } from '../utils/options';
+import { lazyRequirePlugin } from './plugins/lazy-require';
 import { replacePlugin } from './plugins/replace-plugin';
 import { writePkgJson } from '../utils/write-pkg-json';
 import { RollupOptions, OutputOptions } from 'rollup';
-
 
 export async function testing(opts: BuildOptions) {
   const inputDir = join(opts.transpiledDir, 'testing');
 
   await Promise.all([
     // copy jest testing entry files
-    fs.copy(
-      join(opts.scriptsBundlesDir, 'helpers', 'jest'),
-      opts.output.testingDir
-    ),
-
-    // copy testing d.ts files
-    fs.copy(
-      join(inputDir),
-      join(opts.output.testingDir),
-      { filter: f => {
-        if (f.endsWith('.d.ts')) {
-          return true;
-        }
-        if (fs.statSync(f).isDirectory()) {
-          return true;
-        }
-        return false
-      } }
-    )
+    fs.copy(join(opts.scriptsBundlesDir, 'helpers', 'jest'), opts.output.testingDir),
+    copyTestingInternalDts(opts, inputDir),
   ]);
 
   // write package.json
@@ -41,7 +24,7 @@ export async function testing(opts: BuildOptions) {
     name: '@stencil/core/testing',
     description: 'Stencil testing suite.',
     main: 'index.js',
-    types: 'index.d.ts'
+    types: 'index.d.ts',
   });
 
   const external = [
@@ -57,7 +40,6 @@ export async function testing(opts: BuildOptions) {
     'expect',
     '@jest/reporters',
     'jest-message-id',
-    'chalk',
     'net',
     'os',
     'path',
@@ -66,8 +48,8 @@ export async function testing(opts: BuildOptions) {
     'puppeteer-core',
     'readline',
     'rollup',
-    'rollup-plugin-commonjs',
-    'rollup-plugin-node-resolve',
+    '@rollup/plugin-commonjs',
+    '@rollup/plugin-node-resolve',
     'stream',
     'tty',
     'typescript',
@@ -75,13 +57,14 @@ export async function testing(opts: BuildOptions) {
     'util',
     'vm',
     'yargs',
-    'zlib'
+    'zlib',
   ];
 
   const output: OutputOptions = {
     format: 'cjs',
     dir: opts.output.testingDir,
     esModule: false,
+    preferConst: true,
   };
 
   const testingBundle: RollupOptions = {
@@ -89,41 +72,52 @@ export async function testing(opts: BuildOptions) {
     output,
     external,
     plugins: [
+      lazyRequirePlugin(opts, ['@app-data'], '@stencil/core/internal/app-data'),
+      lazyRequirePlugin(opts, ['@platform', '@stencil/core/internal/testing'], '@stencil/core/internal/testing'),
+      lazyRequirePlugin(opts, ['@stencil/core/dev-server'], '../dev-server/index.js'),
+      lazyRequirePlugin(opts, ['@stencil/core/mock-doc'], '../mock-doc/index.js'),
       {
         name: 'testingImportResolverPlugin',
         resolveId(importee) {
-          if (importee === '@compiler') {
+          if (importee === '@stencil/core/compiler') {
             return {
-              id: '../compiler/index.js',
-              external: true
-            }
+              id: '../compiler/stencil.js',
+              external: true,
+            };
           }
-          if (importee === '@dev-server') {
-            return {
-              id: '../dev-server/index.js',
-              external: true
-            }
-          }
-          if (importee === '@mock-doc') {
-            return {
-              id: '../mock-doc/index.js',
-              external: true
-            }
+          if (importee === 'chalk') {
+            return require.resolve('ansi-colors');
           }
           return null;
-        }
+        },
       },
       aliasPlugin(opts),
       replacePlugin(opts),
-      resolve({
-        preferBuiltins: true
+      rollupResolve({
+        preferBuiltins: true,
       }),
-      commonjs(),
-      json() as any,
-    ]
+      rollupCommonjs(),
+      rollupJson({
+        preferConst: true,
+      }),
+    ],
   };
 
-  return [
-    testingBundle,
-  ];
+  return [testingBundle];
+}
+
+async function copyTestingInternalDts(opts: BuildOptions, inputDir: string) {
+  // copy testing d.ts files
+
+  await fs.copy(join(inputDir), join(opts.output.testingDir), {
+    filter: f => {
+      if (f.endsWith('.d.ts')) {
+        return true;
+      }
+      if (fs.statSync(f).isDirectory() && !f.includes('platform')) {
+        return true;
+      }
+      return false;
+    },
+  });
 }

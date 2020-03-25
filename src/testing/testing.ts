@@ -1,18 +1,17 @@
-import { CompilerBuildResults, CompilerNext, Config, DevServer, E2EProcessEnv, OutputTargetWww, Testing, TestingRunOptions } from '@stencil/core/internal';
+import { CompilerBuildResults, Compiler, Config, DevServer, E2EProcessEnv, OutputTargetWww, Testing, TestingRunOptions } from '@stencil/core/internal';
+import { getAppScriptUrl, getAppStyleUrl } from './testing-utils';
 import { hasError } from '@utils';
-import { isOutputTargetDistLazy, isOutputTargetWww } from '../compiler/output-targets/output-utils';
 import { runJest } from './jest/jest-runner';
 import { runJestScreenshot } from './jest/jest-screenshot';
 import { startPuppeteerBrowser } from './puppeteer/puppeteer-browser';
-import { startServer } from '@dev-server';
+import { startServer } from '@stencil/core/dev-server';
 import * as puppeteer from 'puppeteer';
-
 
 export const createTesting = async (config: Config): Promise<Testing> => {
   config = setupTestingConfig(config);
 
   const { createCompiler } = require('../compiler/stencil.js');
-  const compiler: CompilerNext = await createCompiler(config);
+  const compiler: Compiler = await createCompiler(config);
 
   let devServer: DevServer;
   let puppeteerBrowser: puppeteer.Browser;
@@ -68,10 +67,7 @@ export const createTesting = async (config: Config): Promise<Testing> => {
       config.devServer.gzip = false;
       config.devServer.reloadStrategy = null;
 
-      const startupResults = await Promise.all([
-        startServer(config.devServer, config.logger),
-        startPuppeteerBrowser(config),
-      ]);
+      const startupResults = await Promise.all([startServer(config.devServer, config.logger), startPuppeteerBrowser(config)]);
 
       devServer = startupResults[0];
       puppeteerBrowser = startupResults[1];
@@ -88,8 +84,14 @@ export const createTesting = async (config: Config): Promise<Testing> => {
         env.__STENCIL_BROWSER_URL__ = devServer.browserUrl;
         config.logger.debug(`e2e dev server url: ${env.__STENCIL_BROWSER_URL__}`);
 
-        env.__STENCIL_APP_URL__ = getAppUrl(config, devServer.browserUrl);
-        config.logger.debug(`e2e app url: ${env.__STENCIL_APP_URL__}`);
+        env.__STENCIL_APP_SCRIPT_URL__ = getAppScriptUrl(config, devServer.browserUrl);
+        config.logger.debug(`e2e app script url: ${env.__STENCIL_APP_SCRIPT_URL__}`);
+
+        const styleUrl = getAppStyleUrl(config, devServer.browserUrl);
+        if (styleUrl) {
+          env.__STENCIL_APP_STYLE_URL__ = getAppStyleUrl(config, devServer.browserUrl);
+          config.logger.debug(`e2e app style url: ${env.__STENCIL_APP_STYLE_URL__}`);
+        }
       }
     }
 
@@ -102,7 +104,6 @@ export const createTesting = async (config: Config): Promise<Testing> => {
         passed = await runJest(config, env);
       }
       config.logger.info('');
-
     } catch (e) {
       config.logger.error(e);
     }
@@ -113,9 +114,8 @@ export const createTesting = async (config: Config): Promise<Testing> => {
   const destroy = async () => {
     const closingTime: Promise<any>[] = []; // you don't have to go home but you can't stay here
     if (config) {
-      config.sys && config.sys.destroy && config.sys.destroy();
-      if (config.sys_next && config.sys_next.destroy) {
-        closingTime.push(config.sys_next.destroy());
+      if (config.sys && config.sys.destroy) {
+        closingTime.push(config.sys.destroy());
       }
       config = null;
     }
@@ -140,12 +140,15 @@ export const createTesting = async (config: Config): Promise<Testing> => {
   return {
     destroy,
     run,
-  }
+  };
 };
 
 function setupTestingConfig(config: Config) {
   config.buildEs5 = false;
   config.devMode = true;
+  config.minifyCss = false;
+  config.minifyJs = false;
+  config.hashFileNames = false;
   config.validateTypes = false;
   config._isTesting = true;
   config.buildDist = true;
@@ -154,27 +157,11 @@ function setupTestingConfig(config: Config) {
   config.flags.serve = false;
   config.flags.open = false;
 
+  config.outputTargets.forEach(o => {
+    if (o.type === 'www') {
+      o.serviceWorker = null;
+    }
+  });
+
   return config;
-}
-
-function getAppUrl(config: Config, browserUrl: string) {
-  const appFileName = `${config.fsNamespace}.esm.js`;
-
-  const wwwOutput = config.outputTargets.find(isOutputTargetWww);
-  if (wwwOutput) {
-    const appBuildDir = wwwOutput.buildDir;
-    const appFilePath = config.sys.path.join(appBuildDir, appFileName);
-    const appUrlPath = config.sys.path.relative(wwwOutput.dir, appFilePath);
-    return browserUrl + appUrlPath;
-  }
-
-  const distOutput = config.outputTargets.find(isOutputTargetDistLazy);
-  if (distOutput) {
-    const appBuildDir = distOutput.esmDir;
-    const appFilePath = config.sys.path.join(appBuildDir, appFileName);
-    const appUrlPath = config.sys.path.relative(config.rootDir, appFilePath);
-    return browserUrl + appUrlPath;
-  }
-
-  return browserUrl;
 }

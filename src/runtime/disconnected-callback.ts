@@ -4,7 +4,6 @@ import { getHostRef, plt } from '@platform';
 import { PLATFORM_FLAGS } from './runtime-constants';
 import { safeCall } from './update-component';
 
-
 export const disconnectedCallback = (elm: d.HostElement) => {
   if ((plt.$flags$ & PLATFORM_FLAGS.isTmpDisconnected) === 0) {
     const hostRef = getHostRef(elm);
@@ -12,7 +11,7 @@ export const disconnectedCallback = (elm: d.HostElement) => {
 
     if (BUILD.hostListener) {
       if (hostRef.$rmListeners$) {
-        hostRef.$rmListeners$();
+        hostRef.$rmListeners$.map(rmListener => rmListener());
         hostRef.$rmListeners$ = undefined;
       }
     }

@@ -1,8 +1,6 @@
 import * as d from '../declarations';
-import { catchError, buildError } from '@utils';
+import { buildError, catchError, requireFunc } from '@utils';
 import fs from 'fs';
-import { requireFunc } from '../compiler_next/sys/environment';
-
 
 export function getPrerenderConfig(diagnostics: d.Diagnostic[], prerenderConfigPath: string) {
   const prerenderConfig: d.PrerenderConfig = {};
@@ -13,7 +11,6 @@ export function getPrerenderConfig(diagnostics: d.Diagnostic[], prerenderConfigP
       if (userConfig != null) {
         Object.assign(prerenderConfig, userConfig);
       }
-
     } catch (e) {
       catchError(diagnostics, e);
     }
@@ -33,7 +30,6 @@ export function validatePrerenderConfigPath(diagnostics: d.Diagnostic[], prerend
       const err = buildError(diagnostics);
       err.header = `Prerender Config Not Found`;
       err.messageText = `Unable to access: ${prerenderConfigPath}`;
-
     } else {
       try {
         const userConfig = requireFunc(prerenderConfigPath);
@@ -42,10 +38,54 @@ export function validatePrerenderConfigPath(diagnostics: d.Diagnostic[], prerend
           err.header = `Invalid Prerender Config`;
           err.messageText = `Invalid prerender config: ${prerenderConfigPath}`;
         }
-
       } catch (e) {
         catchError(diagnostics, e);
       }
     }
   }
+}
+
+export function getHydrateOptions(prerenderConfig: d.PrerenderConfig, url: URL, diagnostics: d.Diagnostic[]) {
+  const prerenderUrl = url.href;
+
+  const opts: d.PrerenderHydrateOptions = {
+    url: prerenderUrl,
+    addModulePreloads: true,
+    approximateLineWidth: 100,
+    inlineExternalStyleSheets: true,
+    minifyScriptElements: true,
+    minifyStyleElements: true,
+    removeAttributeQuotes: true,
+    removeBooleanAttributeQuotes: true,
+    removeEmptyAttributes: true,
+    removeHtmlComments: true,
+  };
+
+  if (prerenderConfig.canonicalUrl === null || (prerenderConfig.canonicalUrl as any) === false) {
+    opts.canonicalUrl = null;
+  } else if (typeof prerenderConfig.canonicalUrl === 'function') {
+    try {
+      opts.canonicalUrl = prerenderConfig.canonicalUrl(url);
+    } catch (e) {
+      catchError(diagnostics, e);
+    }
+  } else {
+    opts.canonicalUrl = prerenderUrl;
+  }
+
+  if (typeof prerenderConfig.hydrateOptions === 'function') {
+    try {
+      const userOpts = prerenderConfig.hydrateOptions(url);
+      if (userOpts != null) {
+        if (userOpts.prettyHtml && typeof userOpts.removeAttributeQuotes !== 'boolean') {
+          opts.removeAttributeQuotes = false;
+        }
+        Object.assign(opts, userOpts);
+      }
+    } catch (e) {
+      catchError(diagnostics, e);
+    }
+  }
+
+  return opts;
 }

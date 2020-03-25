@@ -1,6 +1,7 @@
+import { addGlobalsToWindowPrototype } from './global';
 import { createConsole } from './console';
 import { MockCustomElementRegistry } from './custom-element-registry';
-import { MockCustomEvent, MockEvent, MockKeyboardEvent, MockMouseEvent, addEventListener, dispatchEvent, removeEventListener, resetEventListeners } from './event';
+import { MockEvent, addEventListener, dispatchEvent, removeEventListener, resetEventListeners } from './event';
 import { MockDocument, resetDocument } from './document';
 import { MockDocumentFragment } from './document-fragment';
 import { MockElement, MockHTMLElement, MockNode, MockNodeList } from './node';
@@ -10,7 +11,6 @@ import { MockLocation } from './location';
 import { MockNavigator } from './navigator';
 import { MockPerformance, resetPerformance } from './performance';
 import { MockStorage } from './storage';
-
 
 const nativeClearInterval = clearInterval;
 const nativeClearTimeout = clearTimeout;
@@ -34,10 +34,6 @@ export class MockWindow {
   __sessionStorage: MockStorage;
   __location: MockLocation;
   __navigator: MockNavigator;
-  __eventClass: any;
-  __customEventClass: any;
-  __keyboardEventClass: any;
-  __mouseEventClass: any;
   __clearInterval: typeof nativeClearInterval;
   __clearTimeout: typeof nativeClearTimeout;
   __setInterval: typeof nativeSetInterval;
@@ -89,7 +85,9 @@ export class MockWindow {
     }
   }
 
-  blur(): any {/**/}
+  blur(): any {
+    /**/
+  }
 
   cancelAnimationFrame(id: any) {
     this.__clearTimeout(id);
@@ -105,7 +103,7 @@ export class MockWindow {
       this.__charDataCstr = class extends MockNode {
         constructor() {
           super(ownerDocument, 0, 'test', '');
-          throw (new Error('Illegal constructor: cannot construct CharacterData'));
+          throw new Error('Illegal constructor: cannot construct CharacterData');
         }
       };
     }
@@ -133,18 +131,8 @@ export class MockWindow {
 
   get CSS() {
     return {
-      supports: () => true
+      supports: () => true,
     };
-  }
-
-  get CustomEvent() {
-    if (this.__customEventClass != null) {
-      return this.__customEventClass;
-    }
-    return MockCustomEvent;
-  }
-  set CustomEvent(custEvClass: any) {
-    this.__customEventClass = custEvClass;
   }
 
   get Document() {
@@ -153,7 +141,7 @@ export class MockWindow {
       this.__docCstr = class extends MockDocument {
         constructor() {
           super(false, win);
-          throw (new Error('Illegal constructor: cannot construct Document'));
+          throw new Error('Illegal constructor: cannot construct Document');
         }
       };
     }
@@ -169,7 +157,7 @@ export class MockWindow {
       this.__docFragCstr = class extends MockDocumentFragment {
         constructor() {
           super(ownerDocument);
-          throw (new Error('Illegal constructor: cannot construct DocumentFragment'));
+          throw new Error('Illegal constructor: cannot construct DocumentFragment');
         }
       };
     }
@@ -185,7 +173,7 @@ export class MockWindow {
       this.__docTypeCstr = class extends MockNode {
         constructor() {
           super(ownerDocument, 0, 'test', '');
-          throw (new Error('Illegal constructor: cannot construct DocumentType'));
+          throw new Error('Illegal constructor: cannot construct DocumentType');
         }
       };
     }
@@ -215,24 +203,16 @@ export class MockWindow {
       this.__elementCstr = class extends MockElement {
         constructor() {
           super(ownerDocument, '');
-          throw (new Error('Illegal constructor: cannot construct Element'));
+          throw new Error('Illegal constructor: cannot construct Element');
         }
       };
     }
     return this.__elementCstr;
   }
 
-  get Event() {
-    if (this.__eventClass != null) {
-      return this.__eventClass;
-    }
-    return MockEvent;
+  focus(): any {
+    /**/
   }
-  set Event(ev: any) {
-    this.__eventClass = ev;
-  }
-
-  focus(): any {/**/}
 
   getComputedStyle(_: any) {
     return {
@@ -253,7 +233,7 @@ export class MockWindow {
       },
       setProperty(): any {
         return null;
-      }
+      },
     } as any;
   }
 
@@ -273,16 +253,6 @@ export class MockWindow {
 
   get JSON() {
     return JSON;
-  }
-
-  get KeyboardEvent() {
-    if (this.__keyboardEventClass != null) {
-      return this.__keyboardEventClass;
-    }
-    return MockKeyboardEvent;
-  }
-  set KeyboardEvent(kbEvClass: any) {
-    this.__keyboardEventClass = kbEvClass;
   }
 
   get HTMLElement() {
@@ -336,7 +306,6 @@ export class MockWindow {
         this.__location = new MockLocation();
       }
       this.__location.href = val;
-
     } else {
       this.__location = val as any;
     }
@@ -344,18 +313,8 @@ export class MockWindow {
 
   matchMedia() {
     return {
-      matches: false
+      matches: false,
     };
-  }
-
-  get MouseEvent() {
-    if (this.__mouseEventClass != null) {
-      return this.__mouseEventClass;
-    }
-    return MockMouseEvent;
-  }
-  set MouseEvent(mouseEvClass: any) {
-    this.__mouseEventClass = mouseEvClass;
   }
 
   get Node() {
@@ -364,7 +323,7 @@ export class MockWindow {
       this.__nodeCstr = class extends MockNode {
         constructor() {
           super(ownerDocument, 0, 'test', '');
-          throw (new Error('Illegal constructor: cannot construct Node'));
+          throw new Error('Illegal constructor: cannot construct Node');
         }
       };
     }
@@ -377,7 +336,7 @@ export class MockWindow {
       this.__nodeListCstr = class extends MockNodeList {
         constructor() {
           super(ownerDocument, [], 0);
-          throw (new Error('Illegal constructor: cannot construct NodeList'));
+          throw new Error('Illegal constructor: cannot construct NodeList');
         }
       };
     }
@@ -424,16 +383,22 @@ export class MockWindow {
     return this.setTimeout(() => {
       callback({
         didTimeout: false,
-        timeRemaining: () => 0
+        timeRemaining: () => 0,
       });
     }, 0);
   }
 
-  scroll(_x?: number, _y?: number) {/**/}
+  scroll(_x?: number, _y?: number) {
+    /**/
+  }
 
-  scrollBy(_x?: number, _y?: number) {/**/}
+  scrollBy(_x?: number, _y?: number) {
+    /**/
+  }
 
-  scrollTo(_x?: number, _y?: number) {/**/}
+  scrollTo(_x?: number, _y?: number) {
+    /**/
+  }
 
   get self() {
     return this;
@@ -529,93 +494,267 @@ export class MockWindow {
     return this;
   }
 
-  onanimationstart() { /**/ }
-  onanimationend() { /**/ }
-  onanimationiteration() { /**/ }
-  onabort() {/**/}
-  onauxclick() {/**/}
-  onbeforecopy() {/**/}
-  onbeforecut() {/**/}
-  onbeforepaste() {/**/}
-  onblur() {/**/}
-  oncancel() {/**/}
-  oncanplay() {/**/}
-  oncanplaythrough() {/**/}
-  onchange() {/**/}
-  onclick() {/**/}
-  onclose() {/**/}
-  oncontextmenu() {/**/}
-  oncopy() {/**/}
-  oncuechange() {/**/}
-  oncut() {/**/}
-  ondblclick() {/**/}
-  ondrag() {/**/}
-  ondragend() {/**/}
-  ondragenter() {/**/}
-  ondragleave() {/**/}
-  ondragover() {/**/}
-  ondragstart() {/**/}
-  ondrop() {/**/}
-  ondurationchange() {/**/}
-  onemptied() {/**/}
-  onended() {/**/}
-  onerror() {/**/}
-  onfocus() {/**/}
-  onformdata() {/**/}
-  onfullscreenchange() {/**/}
-  onfullscreenerror() {/**/}
-  ongotpointercapture() {/**/}
-  oninput() {/**/}
-  oninvalid() {/**/}
-  onkeydown() {/**/}
-  onkeypress() {/**/}
-  onkeyup() {/**/}
-  onload() {/**/}
-  onloadeddata() {/**/}
-  onloadedmetadata() {/**/}
-  onloadstart() {/**/}
-  onlostpointercapture() {/**/}
-  onmousedown() {/**/}
-  onmouseenter() {/**/}
-  onmouseleave() {/**/}
-  onmousemove() {/**/}
-  onmouseout() {/**/}
-  onmouseover() {/**/}
-  onmouseup() {/**/}
-  onmousewheel() {/**/}
-  onpaste() {/**/}
-  onpause() {/**/}
-  onplay() {/**/}
-  onplaying() {/**/}
-  onpointercancel() {/**/}
-  onpointerdown() {/**/}
-  onpointerenter() {/**/}
-  onpointerleave() {/**/}
-  onpointermove() {/**/}
-  onpointerout() {/**/}
-  onpointerover() {/**/}
-  onpointerup() {/**/}
-  onprogress() {/**/}
-  onratechange() {/**/}
-  onreset() {/**/}
-  onresize() {/**/}
-  onscroll() {/**/}
-  onsearch() {/**/}
-  onseeked() {/**/}
-  onseeking() {/**/}
-  onselect() {/**/}
-  onselectstart() {/**/}
-  onstalled() {/**/}
-  onsubmit() {/**/}
-  onsuspend() {/**/}
-  ontimeupdate() {/**/}
-  ontoggle() {/**/}
-  onvolumechange() {/**/}
-  onwaiting() {/**/}
-  onwebkitfullscreenchange() {/**/}
-  onwebkitfullscreenerror() {/**/}
-  onwheel() {/**/}
+  onanimationstart() {
+    /**/
+  }
+  onanimationend() {
+    /**/
+  }
+  onanimationiteration() {
+    /**/
+  }
+  onabort() {
+    /**/
+  }
+  onauxclick() {
+    /**/
+  }
+  onbeforecopy() {
+    /**/
+  }
+  onbeforecut() {
+    /**/
+  }
+  onbeforepaste() {
+    /**/
+  }
+  onblur() {
+    /**/
+  }
+  oncancel() {
+    /**/
+  }
+  oncanplay() {
+    /**/
+  }
+  oncanplaythrough() {
+    /**/
+  }
+  onchange() {
+    /**/
+  }
+  onclick() {
+    /**/
+  }
+  onclose() {
+    /**/
+  }
+  oncontextmenu() {
+    /**/
+  }
+  oncopy() {
+    /**/
+  }
+  oncuechange() {
+    /**/
+  }
+  oncut() {
+    /**/
+  }
+  ondblclick() {
+    /**/
+  }
+  ondrag() {
+    /**/
+  }
+  ondragend() {
+    /**/
+  }
+  ondragenter() {
+    /**/
+  }
+  ondragleave() {
+    /**/
+  }
+  ondragover() {
+    /**/
+  }
+  ondragstart() {
+    /**/
+  }
+  ondrop() {
+    /**/
+  }
+  ondurationchange() {
+    /**/
+  }
+  onemptied() {
+    /**/
+  }
+  onended() {
+    /**/
+  }
+  onerror() {
+    /**/
+  }
+  onfocus() {
+    /**/
+  }
+  onformdata() {
+    /**/
+  }
+  onfullscreenchange() {
+    /**/
+  }
+  onfullscreenerror() {
+    /**/
+  }
+  ongotpointercapture() {
+    /**/
+  }
+  oninput() {
+    /**/
+  }
+  oninvalid() {
+    /**/
+  }
+  onkeydown() {
+    /**/
+  }
+  onkeypress() {
+    /**/
+  }
+  onkeyup() {
+    /**/
+  }
+  onload() {
+    /**/
+  }
+  onloadeddata() {
+    /**/
+  }
+  onloadedmetadata() {
+    /**/
+  }
+  onloadstart() {
+    /**/
+  }
+  onlostpointercapture() {
+    /**/
+  }
+  onmousedown() {
+    /**/
+  }
+  onmouseenter() {
+    /**/
+  }
+  onmouseleave() {
+    /**/
+  }
+  onmousemove() {
+    /**/
+  }
+  onmouseout() {
+    /**/
+  }
+  onmouseover() {
+    /**/
+  }
+  onmouseup() {
+    /**/
+  }
+  onmousewheel() {
+    /**/
+  }
+  onpaste() {
+    /**/
+  }
+  onpause() {
+    /**/
+  }
+  onplay() {
+    /**/
+  }
+  onplaying() {
+    /**/
+  }
+  onpointercancel() {
+    /**/
+  }
+  onpointerdown() {
+    /**/
+  }
+  onpointerenter() {
+    /**/
+  }
+  onpointerleave() {
+    /**/
+  }
+  onpointermove() {
+    /**/
+  }
+  onpointerout() {
+    /**/
+  }
+  onpointerover() {
+    /**/
+  }
+  onpointerup() {
+    /**/
+  }
+  onprogress() {
+    /**/
+  }
+  onratechange() {
+    /**/
+  }
+  onreset() {
+    /**/
+  }
+  onresize() {
+    /**/
+  }
+  onscroll() {
+    /**/
+  }
+  onsearch() {
+    /**/
+  }
+  onseeked() {
+    /**/
+  }
+  onseeking() {
+    /**/
+  }
+  onselect() {
+    /**/
+  }
+  onselectstart() {
+    /**/
+  }
+  onstalled() {
+    /**/
+  }
+  onsubmit() {
+    /**/
+  }
+  onsuspend() {
+    /**/
+  }
+  ontimeupdate() {
+    /**/
+  }
+  ontoggle() {
+    /**/
+  }
+  onvolumechange() {
+    /**/
+  }
+  onwaiting() {
+    /**/
+  }
+  onwebkitfullscreenchange() {
+    /**/
+  }
+  onwebkitfullscreenerror() {
+    /**/
+  }
+  onwheel() {
+    /**/
+  }
 }
+
+addGlobalsToWindowPrototype(MockWindow.prototype);
 
 function resetWindowDefaults(win: MockWindow) {
   win.__clearInterval = nativeClearInterval;
@@ -631,7 +770,7 @@ export function createWindow(html: string | boolean = null): Window {
   return new MockWindow(html) as any;
 }
 
-export function cloneWindow(srcWin: Window, opts: { customElementProxy?: boolean; } = {}) {
+export function cloneWindow(srcWin: Window, opts: { customElementProxy?: boolean } = {}) {
   if (srcWin == null) {
     return null;
   }
@@ -645,13 +784,11 @@ export function cloneWindow(srcWin: Window, opts: { customElementProxy?: boolean
     const clonedDoc = new MockDocument(false, clonedWin);
     clonedWin.document = clonedDoc as any;
     clonedDoc.documentElement = srcWin.document.documentElement.cloneNode(true) as any;
-
   } else {
     clonedWin.document = new MockDocument(null, clonedWin) as any;
   }
   return clonedWin;
 }
-
 
 export function cloneDocument(srcDoc: Document) {
   if (srcDoc == null) {
@@ -670,7 +807,6 @@ export function constrainTimeouts(win: any) {
   (win as MockWindow).__allowInterval = false;
   (win as MockWindow).__maxTimeout = 0;
 }
-
 
 function resetWindow(win: MockWindow) {
   if (win != null) {
@@ -732,10 +868,10 @@ function resetWindowDimensions(win: MockWindow) {
       keepAwake: false,
       orientation: {
         angle: 0,
-        type: 'portrait-primary'
+        type: 'portrait-primary',
       } as any,
       pixelDepth: 24,
-      width: win.innerWidth
+      width: win.innerWidth,
     } as any;
   } catch (e) {}
 }

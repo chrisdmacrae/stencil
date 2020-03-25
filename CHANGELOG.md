@@ -1,7 +1,114 @@
-# 💪 [1.9.0-12](https://github.com/ionic-team/stencil/compare/v1.8.5...v1.9.0-12) (2020-01-15)
+## 🕹 [1.11.2](https://github.com/ionic-team/stencil/compare/v1.11.1...v1.11.2) (2020-03-23)
 
 
 ### Bug Fixes
+
+* **angular:** validate angular outputTarget ([413c451](https://github.com/ionic-team/stencil/commit/413c45199d329cb03e4cee4dfe81235f60309ab0))
+
+
+
+## 🐝 [1.11.1](https://github.com/ionic-team/stencil/compare/v1.11.0...v1.11.1) (2020-03-23)
+
+
+### Features
+
+* **compiler:** add minified stencil.min.js ([d2cb1f9](https://github.com/ionic-team/stencil/commit/d2cb1f93a1747f9e3603482402a6d64c7f0942af))
+* **compiler:** expose path fns in compiler ([7e95038](https://github.com/ionic-team/stencil/commit/7e950389864ce107c426fafff42d1614486e8fc0))
+* **sys:** add fetch to compiler system ([0977a44](https://github.com/ionic-team/stencil/commit/0977a44a67ec6c7b653ca4c02f8c97396e0a4916))
+
+
+### Bug Fixes
+
+* **runtime:** next tick initialize for angular ([#2299](https://github.com/ionic-team/stencil/issues/2299)) ([d771df5](https://github.com/ionic-team/stencil/commit/d771df526f798e5cfa81a183f04dc3639c34b10d))
+
+
+
+# 🍿 [1.11.0](https://github.com/ionic-team/stencil/compare/v1.10.3...v1.11.0) (2020-03-20)
+
+
+### Bug Fixes
+
+* **compiler:** handle component styles with literals ([2bef0f3](https://github.com/ionic-team/stencil/commit/2bef0f3f56887f3dd977794734e4db19e0adf56b))
+* **compiler:** rename @stencil/core imports in all d.ts files ([4c70fdd](https://github.com/ionic-team/stencil/commit/4c70fdd2c418a1419c8c30bd585d4a081100b28b))
+* **test:** e2e tests without www output target ([7be5255](https://github.com/ionic-team/stencil/commit/7be5255d119dd691e223eedcd0445c0a2f78bfc0))
+
+
+
+## 🏓 [1.10.3](https://github.com/ionic-team/stencil/compare/v1.10.2...v1.10.3) (2020-03-19)
+
+
+### Bug Fixes
+
+* **vdom:** functional components always get object as props ([0f71c6c](https://github.com/ionic-team/stencil/commit/0f71c6c590624bbfe64c6038166daa0c90f74123))
+
+
+
+## 🤘 [1.10.2](https://github.com/ionic-team/stencil/compare/v1.10.1...v1.10.2) (2020-03-19)
+
+
+### Bug Fixes
+
+* **cli:** generate task emits in correct path ([704e13c](https://github.com/ionic-team/stencil/commit/704e13cd0a2110c13032decefd727ab605b187be)), closes [#2282](https://github.com/ionic-team/stencil/issues/2282)
+* **runtime:** always emit appload event ([#2285](https://github.com/ionic-team/stencil/issues/2285)) ([b4e34df](https://github.com/ionic-team/stencil/commit/b4e34dfc7fefc04c80fef193e5a575f5809af1b7))
+* **runtime:** emit appload eventon window ([83f2376](https://github.com/ionic-team/stencil/commit/83f23767e369e3f31cceda7caec25bd9d88a23c3))
+* **testing:** support multiple modes ([#2286](https://github.com/ionic-team/stencil/issues/2286)) ([20a1559](https://github.com/ionic-team/stencil/commit/20a1559dab40143b0e6645bb53099a89c247a485))
+* **types:** svg element only have attributes ([#2283](https://github.com/ionic-team/stencil/issues/2283)) ([667597d](https://github.com/ionic-team/stencil/commit/667597dd1aebf05aae171a4cfcba2baad59b50b8))
+* **vdom:** pass undefined to functional cmp ([1ffd4a9](https://github.com/ionic-team/stencil/commit/1ffd4a9b6b928d4ca4ff17eb315347af88839503)), closes [#2254](https://github.com/ionic-team/stencil/issues/2254)
+* remove typescript helpers workaround ([#2266](https://github.com/ionic-team/stencil/issues/2266)) ([3113af1](https://github.com/ionic-team/stencil/commit/3113af1ca0047bec7b67231a54f96591aad0570a))
+
+
+
+## 🍋 [1.10.1](https://github.com/ionic-team/stencil/compare/v1.10.0...v1.10.1) (2020-03-17)
+
+
+### Bug Fixes
+
+* **bundler:** not resolve browser modules ([#2279](https://github.com/ionic-team/stencil/issues/2279)) ([93182e7](https://github.com/ionic-team/stencil/commit/93182e75cd25bcc4f25947c3b4265fd35d22a411))
+* **docs:** validate vscode output docs ([2f48a8d](https://github.com/ionic-team/stencil/commit/2f48a8d6e9964c6bf3698e756b5e317f5e7abc4a))
+* disable console colors in E2E testing ([27e1eda](https://github.com/ionic-team/stencil/commit/27e1edae8555c8c5cd44d54fb392e41176173088))
+* **docs:** parse css variables docs ([#2273](https://github.com/ionic-team/stencil/issues/2273)) ([1370152](https://github.com/ionic-team/stencil/commit/137015252decda15cf75cea6b006faa3eedc13a2))
+
+
+
+# 🎭 [1.10.0](https://github.com/ionic-team/stencil/compare/v1.9.2...v1.10.0) (2020-03-16)
+
+
+### Bug Fixes
+
+* **docs:** use pipe for union types ([d196971](https://github.com/ionic-team/stencil/commit/d19697164f25e01813430410581f517c149817d4))
+* **build:** alias @stencil/core/internal imports to correct platform ([#2267](https://github.com/ionic-team/stencil/issues/2267)) ([d04a1ca](https://github.com/ionic-team/stencil/commit/d04a1ca82040f6e5e12d01243122b54ce3307af5))
+* **fs:** clone cached fetch response text ([f19a3df](https://github.com/ionic-team/stencil/commit/f19a3dfdc0fe4b032567209ab9012eb1ed75d00f))
+
+
+### Features
+
+* **docs:** include listeners in docs-json ([#2272](https://github.com/ionic-team/stencil/issues/2272)) ([040111e](https://github.com/ionic-team/stencil/commit/040111eb5f69a667f3056d5611059beb869d4cfe))
+* **mock-doc:** add Request, Response, Headers to mock-doc and testing ([31502ff](https://github.com/ionic-team/stencil/commit/31502ff98b45e34379a3293d6bdb098ee301131f))
+* **logger:** disable log colors for ci builds ([88c76e6](https://github.com/ionic-team/stencil/commit/88c76e64ccde91906aaab72dea0b508ed451448f))
+
+
+
+## 🚦 [1.9.2](https://github.com/ionic-team/stencil/compare/v1.9.1...v1.9.2) (2020-03-12)
+
+Deprecate element.forceUpdate() and print console warnings during development to import `forceUpdate` from `@stencil/core` instead. The `forceUpdate()` method be removed from the host element in v2.
+
+
+### Bug Fixes
+
+* **build:** minify css-shim build ([7eaad18](https://github.com/ionic-team/stencil/commit/7eaad185e7248158d88369c5ff36cd46c7e6bbba))
+
+
+
+## 🐧 [1.9.1](https://github.com/ionic-team/stencil/compare/v1.9.0...v1.9.1) (2020-03-10)
+
+
+### Bug Fixes
+
+* **watch:** only remove from module cache on delete ([1f4ff24](https://github.com/ionic-team/stencil/commit/1f4ff24e9b5e1417396c6c3482dd3a7a50637875))
+
+
+
+# 🏔 [1.9.0](https://github.com/ionic-team/stencil/compare/v1.8.11...v1.9.0) (2020-03-09)
 
 With the `1.9.0` release, the default compiler is the same as `1.8.x`. However, to opt-in to test the improved compiler use the `--next` flag. Once the "next" compiler is stable we'll then make it the default in the `1.10.0` release. Currently the next compiler is passing all tests, but we'd like to get more real-world testing before making it the default.
 
@@ -10,28 +117,26 @@ Some of main features with the `--next` compiler include:
 - Faster incremental builds and TypeScript error feedback
 - Easily bundle and interact with [Web Workers](https://stenciljs.com/docs/web-workers)
 - `dist-custom-elements-bundle` Output Target (components without lazy loading)
-- Internal compiler refactor in order to improve 3rd party tooling
+- Internal compiler and runtime refactor in order to improve 3rd party tooling
 - Import CSS files using traditional ESM imports
 - Online REPL
+- TypeScript 3.8.3
+- Rollup 1.32.0
 
 
 ### Features
 
 * **build:** web workers esm ([67a7fc2](https://github.com/ionic-team/stencil/commit/67a7fc2ea969f6b33dd4662c912f5218f6729a48))
 * **compiler:** custom-elements-bundle ([228e382](https://github.com/ionic-team/stencil/commit/228e38201390327dbb4198cfb0e53d6218415068))
-* **delegatesFocus:** ability to set delegatesFocus on shadow cmps ([f45c919](https://github.com/ionic-team/stencil/commit/f45c919a9675827a5006702218982022b3e0ec0d)), closes [#1623](https://github.com/ionic-team/stencil/issues/1623)
 * **mock-dock:** support all css selectors ([a2c4667](https://github.com/ionic-team/stencil/commit/a2c46676abb3f10d58556345e0645408a7263860))
 * **mock-doc:** add insertAdjacentHTML ([42921d2](https://github.com/ionic-team/stencil/commit/42921d2ede7ee9b2840ca851e8887682194f1ee8)), closes [#1980](https://github.com/ionic-team/stencil/issues/1980)
 * **mock-doc:** get attributes by index ([d91b197](https://github.com/ionic-team/stencil/commit/d91b197f1ba57e15f336a1213fc29e4051e61906)), closes [#1211](https://github.com/ionic-team/stencil/issues/1211)
 * **worker:** transfer any typedArray ([302ddb1](https://github.com/ionic-team/stencil/commit/302ddb1f3cb9ee2efd5430856eabe4672fb1a903))
 * **docs:** Add documentation output for Shadow Parts ([#2122](https://github.com/ionic-team/stencil/issues/2122)) ([f7cd61a](https://github.com/ionic-team/stencil/commit/f7cd61a52f6d46bdabbc359fc9c86a6fa7e4c632))
-* **e2e:** add togglesAttribute() and removeAttribute() to e2e elements ([5b28be8](https://github.com/ionic-team/stencil/commit/5b28be88c8418a84ef168f126c269931c1151a63)), closes [#1745](https://github.com/ionic-team/stencil/issues/1745)
 * **mock-doc:** selector to handle child combinators ([#2037](https://github.com/ionic-team/stencil/issues/2037)) ([6fd43e7](https://github.com/ionic-team/stencil/commit/6fd43e75eb2828c188ef22c59504e3c211639cd5))
 * **test:** Add two event detail jest matchers ([ebc518d](https://github.com/ionic-team/stencil/commit/ebc518dd258be44b9c5e74c440c5134086ab55f9)), closes [#2046](https://github.com/ionic-team/stencil/issues/2046)
 * **compiler:** add config flag for preventing script inlining ([#2077](https://github.com/ionic-team/stencil/issues/2077)) ([f85cf42](https://github.com/ionic-team/stencil/commit/f85cf423fd4f3d3521da6c89839f450f3c4756cc))
 * **compiler:** add Build.isTesting ([eac90bd](https://github.com/ionic-team/stencil/commit/eac90bd151a993b2387aa0bf7583d3e696a0e98f))
-* **custom:** add copy tasks to custom outputTargets ([#2023](https://github.com/ionic-team/stencil/issues/2023)) ([65aeb8c](https://github.com/ionic-team/stencil/commit/65aeb8c4a818b200695946073b71f63bf4aa3634))
-* **runtime:** experimental active render context ([#2040](https://github.com/ionic-team/stencil/issues/2040)) ([75ed488](https://github.com/ionic-team/stencil/commit/75ed488667020065eec908365a4595b8d2a32531))
 * **bundler:** txt plugin ([b0efb11](https://github.com/ionic-team/stencil/commit/b0efb11e6d10fb501e0ef35cdff8951983ffcdc4))
 * **compiler:** add Build.isServer ([56d94f3](https://github.com/ionic-team/stencil/commit/56d94f33db5917e402692cf1740e0b62047e4e63))
 * **config:** also load and validate tsconfig within loadConfig() ([cbff6e1](https://github.com/ionic-team/stencil/commit/cbff6e1535942e2f83681e63240556779a38cb35))
@@ -40,13 +145,32 @@ Some of main features with the `--next` compiler include:
 * **fetch:** export mock fetch testing apis ([c63a64f](https://github.com/ionic-team/stencil/commit/c63a64fa5bf545cd3965310399993e648f8261d9))
 * **prerender:** add prerender task cmd for existing hydrate app scripts ([f4f3213](https://github.com/ionic-team/stencil/commit/f4f32139712f71f6c7d29248d9e0c030b3cdff29))
 * **polyfills:** optionally exclude css vars shim ([b3b6993](https://github.com/ionic-team/stencil/commit/b3b69933528b7106ff69720797ecaabec74e4546))
+* **bundling:** add webpack chunk name ([3ca7d82](https://github.com/ionic-team/stencil/commit/3ca7d82d8ef03f92b147892a6932c645b50d3aa7)), closes [#1345](https://github.com/ionic-team/stencil/issues/1345) [#1346](https://github.com/ionic-team/stencil/issues/1346)
+* **dev-server:** experimental dev node modules ([104a819](https://github.com/ionic-team/stencil/commit/104a81920bbcf575346f0969459f3eb329edfe3c))
+* **runtime:** dispatch namespace in lifecycleDOMEvents ([67cb2f3](https://github.com/ionic-team/stencil/commit/67cb2f3d1e03509e726fe284a0fcdc3601038634))
+* add dynamicImportShim as extra ([#2177](https://github.com/ionic-team/stencil/issues/2177)) ([fd81489](https://github.com/ionic-team/stencil/commit/fd8148958a5fd300ff5d634d32106c20afdfb4d8))
+* **e2e:** include global style in e2e html content ([b8e7a8f](https://github.com/ionic-team/stencil/commit/b8e7a8feca1da48ad6662a18a77c6e3a1eec25c7)), closes [#2192](https://github.com/ionic-team/stencil/issues/2192)
+* **hydratedFlag:** ability to configure applied hydrated css class ([62e2168](https://github.com/ionic-team/stencil/commit/62e2168e1f49d3778b269fae10c8b77e30dc1c49))
+* minify dist-custom-elements-bundle in prod mode ([7f90430](https://github.com/ionic-team/stencil/commit/7f904304263a6a9ce9e410f7902b37bd91d4534c))
+* **build:** exclude setting vdom prop/attrs when not used ([381b66d](https://github.com/ionic-team/stencil/commit/381b66d15b4559fc1c9a603c681d22902d38f52d))
+* **extras:** add ability to opt out of scriptDataOpts ([d622712](https://github.com/ionic-team/stencil/commit/d622712d5c84bf6554048d3ad6f508e555e6132b))
+* **minify:** improve minifying core ([747fb7d](https://github.com/ionic-team/stencil/commit/747fb7d61b553d6f4c469dba63c12e6cd8f9cad4))
+* **style:** set static style as property on cmp clss ([ba14fe6](https://github.com/ionic-team/stencil/commit/ba14fe61dd7cb398bd24a8bc7442bf28dfb4f5a6))
+* **cli:** add ComponentInterface in component generator template ([#2147](https://github.com/ionic-team/stencil/issues/2147)) ([1688ff4](https://github.com/ionic-team/stencil/commit/1688ff499e75a727c3b636b8396f4b05fd280cbd))
+* **docs:** disable the dependencies part of the markdown docs. ([#2145](https://github.com/ionic-team/stencil/issues/2145)) ([4e74f26](https://github.com/ionic-team/stencil/commit/4e74f26934741aa0ac1b143e79b48da7d9d6deed))
+* **compiler:** export optimizeCss and optimizeJs ([d80a111](https://github.com/ionic-team/stencil/commit/d80a111de9a12f0a212b21bfb3a72ee65c50a7a8))
+* **next:** transform css content to esm format w/ compile() ([a72c01d](https://github.com/ionic-team/stencil/commit/a72c01dca1d50fb65ba57348156cf650d1b23b11))
+* **prerender:** optimizeCss and optimzeJs ([425ce38](https://github.com/ionic-team/stencil/commit/425ce380e4d75aeed2592565448160aec862887d))
+* **styles:** use static get styles() with template literals ([ff79406](https://github.com/ionic-team/stencil/commit/ff79406843655a4a4117a31686e4eb98cc45e535)), closes [#2234](https://github.com/ionic-team/stencil/issues/2234)
+* **compiler:** treeshake supportsShadow ([#2249](https://github.com/ionic-team/stencil/issues/2249)) ([da634da](https://github.com/ionic-team/stencil/commit/da634da1aa08a1afbb3dc0a25d5102079bea0eca))
+* **runtime:** remove slot polyfill more aggressively ([#2244](https://github.com/ionic-team/stencil/issues/2244)) ([56da2e7](https://github.com/ionic-team/stencil/commit/56da2e71b45e1b60bcc4637b4a9e7e84524a6ce5))
+* **sw:** do not register or unregister sw when config set to false ([565d353](https://github.com/ionic-team/stencil/commit/565d35307dd73009cd3f1e217278b8661dc25a95))
 
 
 ### Bug Fixes
 
 * **config:** filter spec/e2e from tsconfig for stencil builds ([5dfa164](https://github.com/ionic-team/stencil/commit/5dfa16460549d9503cff0f09dbf4068cc3b1d621))
 * **css:** improve css minify ([a7d7e3c](https://github.com/ionic-team/stencil/commit/a7d7e3ca844bb43001dbdae93283c116e01c47a0))
-* **css-shim:** apply css vars to global styles ([302b5bd](https://github.com/ionic-team/stencil/commit/302b5bd82c59a9265bf9893011643cc9bf28a499)), closes [#2076](https://github.com/ionic-team/stencil/issues/2076)
 * **deps:** ensure deps unique ([21afacb](https://github.com/ionic-team/stencil/commit/21afacb64a55adb3c065704eb50195bd154ee174))
 * **hmr:** fix style hmr ([c14fcc4](https://github.com/ionic-team/stencil/commit/c14fcc4c980c812d710f38cc6ed3358a53a4d617))
 * **next:** fix web worker ts.sys patching ([fe0ab8a](https://github.com/ionic-team/stencil/commit/fe0ab8aa93645cda8002b0437eb4b323bd7bedd9))
@@ -59,36 +183,28 @@ Some of main features with the `--next` compiler include:
 * **compiler:** change props union type parsing ([#1779](https://github.com/ionic-team/stencil/issues/1779)) ([46b1090](https://github.com/ionic-team/stencil/commit/46b1090924da888f29c46d3041ebc927f6a2fc32))
 * **dist:** allow globs in package.json files ([9777426](https://github.com/ionic-team/stencil/commit/9777426597bea6ed604c76b50ce26b950dca6990)), closes [#1792](https://github.com/ionic-team/stencil/issues/1792)
 * **docs:** fix docs build ([d83e355](https://github.com/ionic-team/stencil/commit/d83e3555865b6889fab41c8dd0612ab8b013f09a)), closes [#2095](https://github.com/ionic-team/stencil/issues/2095)
-* **safari:** update safari 10 to use es5/system builds ([ea20c28](https://github.com/ionic-team/stencil/commit/ea20c28cfb5a496d8059781b8fae58bb1f904317)), closes [#1900](https://github.com/ionic-team/stencil/issues/1900)
 * **screenshot:** set correct width/height ([14e8ffc](https://github.com/ionic-team/stencil/commit/14e8ffc63a1cb936ead52fa2476fe432aa4273aa)), closes [#1209](https://github.com/ionic-team/stencil/issues/1209)
 * **www:** fix prod import paths for www output ([e66c9ea](https://github.com/ionic-team/stencil/commit/e66c9eae4b8f43ed90214f09440e7d478995a9ff))
 * **compiler:** dead @Watch() are warnings in dev mode ([0dd169a](https://github.com/ionic-team/stencil/commit/0dd169a020d671674d5f0663dfe18133c8b9e018))
 * **compiler:** fix circular dependency with [@app-globals](https://github.com/app-globals) ([ce4a6c8](https://github.com/ionic-team/stencil/commit/ce4a6c860f926fc85d52ecf824ca0573c5466ffd))
 * **compiler:** resolve const enums ([86c0afe](https://github.com/ionic-team/stencil/commit/86c0afe32195269bd8e2feb1e9983e8f9ee16c26))
-* **crossOrigin:** fix crossOrigin error on edge ([7c45767](https://github.com/ionic-team/stencil/commit/7c45767321af89c54c2cc9433b49828c25fd12d8))
 * **dev-server:** append dev server connector within <body> ([140fc7f](https://github.com/ionic-team/stencil/commit/140fc7f8edea8a03da608d27a10d3c19edf13658))
 * **fs:** do not skip specs in ts.sys ([d753e38](https://github.com/ionic-team/stencil/commit/d753e38c9817a00dc4da5a7d81f6b6443d5973e9))
 * **fs:** output targets in separate map ([e2b5318](https://github.com/ionic-team/stencil/commit/e2b5318f8c47dfefd38a7c873c13ef6c8b386b9d))
 * **hydrate:** do not remove existing canonical links ([19da9ec](https://github.com/ionic-team/stencil/commit/19da9ec695c0ab89ec09b23144c8a1a3c8034f5d)), closes [#2097](https://github.com/ionic-team/stencil/issues/2097)
-* **hydrate:** fix scoped/ie11/edge clientside slot hydrate ([a6e573c](https://github.com/ionic-team/stencil/commit/a6e573cad99488010bb847d88127e7b28fd18eb7)), closes [#2068](https://github.com/ionic-team/stencil/issues/2068)
-* **ie11:** ensure document.body ready for es5 msg ([df669c8](https://github.com/ionic-team/stencil/commit/df669c8d434e1c0fd75f037efb842b9e1d7015f7))
 * **next:** fix dev server hmr ([f1af876](https://github.com/ionic-team/stencil/commit/f1af876e5f297ce46891b63d7b63250fcc62a8c1))
 * **next:** fix file watch callbacks ([80cc68d](https://github.com/ionic-team/stencil/commit/80cc68d7a1fcf0ec7490dc191417bab3f0a29d1a))
 * **next:** fix ts readDirectory, use fetch cache ([18360ca](https://github.com/ionic-team/stencil/commit/18360caa8c04bed3a7ad2415239e50474a254c2a))
 * **prerender:** fix max concurrency ([a24f9d1](https://github.com/ionic-team/stencil/commit/a24f9d1575ace81ec60e718cd3a48233906494ef))
 * **runtime:** better error for unknown mode ([d0eeec0](https://github.com/ionic-team/stencil/commit/d0eeec0fd4979f50b3d21e0ab9e5b21a856c2a3d))
-* **slot:** fix appendChild when using slot polyfill ([373fa6e](https://github.com/ionic-team/stencil/commit/373fa6e099a183fbf42ab46112396d9733f025e7)), closes [#1686](https://github.com/ionic-team/stencil/issues/1686)
 * **worker:** check for web worker support ([09f8e18](https://github.com/ionic-team/stencil/commit/09f8e18e95e10001e1d73e94425b4093e5c3ad47))
 * **worker:** ensure value undefined when error ([484dc6b](https://github.com/ionic-team/stencil/commit/484dc6b3a41c2bd65c7a6d60e7eaa19e8cf7a774))
 * **worker:** improve error debuggin in dev mode ([d2b648d](https://github.com/ionic-team/stencil/commit/d2b648de5553007f10788d928ff58d9bf2e9681b))
-* **mock-doc:** add CSSStyleSheet insertRule() to fix emotion-css SSR ([a13bd0a](https://github.com/ionic-team/stencil/commit/a13bd0a03b22b318b9a34615e922f17bb5ef3571))
 * **worker:** dev error ([eeb8b3d](https://github.com/ionic-team/stencil/commit/eeb8b3d35347fb27863bc02142c6e0f156a12184))
 * **compiler:** config.extras is always defined ([d5591d3](https://github.com/ionic-team/stencil/commit/d5591d370caaad5a788817b8bc26b06a74434c6d))
 * **next:** don't minify css around + ([d38707d](https://github.com/ionic-team/stencil/commit/d38707d3d5e80de75090397278c245acbd3827cb))
 * **next:** emit componentGraph data ([3d4eb4a](https://github.com/ionic-team/stencil/commit/3d4eb4af2dea4580da4f4b055eb557f8dd9940c3))
 * **node:** semver break bundling ([58f9b4d](https://github.com/ionic-team/stencil/commit/58f9b4d17a378afb0d5bbf7d0507ac0a98df3e09)), closes [/github.com/npm/node-semver/blob/bb36c98d71d5760d730abba71c68bc324035dd36/index.js#L7-L21](https://github.com//github.com/npm/node-semver/blob/bb36c98d71d5760d730abba71c68bc324035dd36/index.js/issues/L7-L21)
-* **runtime:** cloneNode fix opt-in ([6b4901d](https://github.com/ionic-team/stencil/commit/6b4901d6809f31b376197ecfec9615fa95563456)), closes [#1070](https://github.com/ionic-team/stencil/issues/1070) [#1948](https://github.com/ionic-team/stencil/issues/1948)
-* **ssr:** check window ref ([6a30a32](https://github.com/ionic-team/stencil/commit/6a30a32fdc3f806f556c910daa81d5493f11befb))
 * **vdom:** functional components can accept any children ([93081f5](https://github.com/ionic-team/stencil/commit/93081f5112a4216f1e67b37b4e1a65564abcb6fb)), closes [#2007](https://github.com/ionic-team/stencil/issues/2007) [#1969](https://github.com/ionic-team/stencil/issues/1969)
 * **worker:** add dev error about non async exports ([e056a87](https://github.com/ionic-team/stencil/commit/e056a8788e3cb05b5928b95752ed7dfdaa194e13))
 * **compiler:** add unused watch error ([f9c8078](https://github.com/ionic-team/stencil/commit/f9c80785f348f1d77fadad77cb0ad12200cc88d3))
@@ -113,17 +229,11 @@ Some of main features with the `--next` compiler include:
 * **next:** warnings does not kill the process ([29ff45e](https://github.com/ionic-team/stencil/commit/29ff45e55c097219e56593849c04299a7fcb344e))
 * **compiler:** fix prerendering in next compiler ([4669ad9](https://github.com/ionic-team/stencil/commit/4669ad934d1e41f532af30a51a2a293dd32ab7b9))
 * **fs:** fix sys fs.readdirSync ([ec75495](https://github.com/ionic-team/stencil/commit/ec7549506a787e7599b22c7fbca82e47ded4242e))
-* **mock-doc:** fix MockElement type ([d5a4243](https://github.com/ionic-team/stencil/commit/d5a4243a2973407cbb6deb3b90bd3071ce28fe7e))
 * **next:** collection output target ([5fffda1](https://github.com/ionic-team/stencil/commit/5fffda1c990bc3464aae59cb4aa5e0ef0f677377))
 * **next:** do not override target ([d1bd0e2](https://github.com/ionic-team/stencil/commit/d1bd0e2c95cc1ae9904fe63ed2016e254990abb6))
 * **next:** typescript plugin runs first ([67e6565](https://github.com/ionic-team/stencil/commit/67e6565f7e19a5209c13e1f5e6a62a79e51ad688))
 * **runtime:** cmpMeta is part of hostRef ([04f7dcd](https://github.com/ionic-team/stencil/commit/04f7dcd9937b1175b3f19983032debba249c1b3c))
 * **www:** inline esm in place ([b99344f](https://github.com/ionic-team/stencil/commit/b99344fbcb975a9fef8d5995e7d1b5251da022cd))
-* **mock-doc:** implement  getElementById() in document fragment ([#2032](https://github.com/ionic-team/stencil/issues/2032)) ([35021d8](https://github.com/ionic-team/stencil/commit/35021d818f0dd9eca9935f4737c25d5461525fe5)), closes [#2030](https://github.com/ionic-team/stencil/issues/2030)
-* **event:** emit() returns the CustomElement ([#2017](https://github.com/ionic-team/stencil/issues/2017)) ([e675366](https://github.com/ionic-team/stencil/commit/e675366f59526b28bd4be0712f01a096ca8148e4)), closes [#1996](https://github.com/ionic-team/stencil/issues/1996)
-* **polyfills:** update baseURI for base w/out href ([#1995](https://github.com/ionic-team/stencil/issues/1995)) ([8582c93](https://github.com/ionic-team/stencil/commit/8582c934b5aaccf3d7e8c14131f1af4eedcc07b8))
-* **prerender:** prevent window timeout leaks ([b80feda](https://github.com/ionic-team/stencil/commit/b80feda7e8b57815f750cb9b2d608525b6f3b6a6))
-* **testing:** fix single-process mode ([#2016](https://github.com/ionic-team/stencil/issues/2016)) ([72f0a05](https://github.com/ionic-team/stencil/commit/72f0a05f0a4403174afbbc52ae46820e6d53faa6))
 * **next:** optimize dist-custom-elements bundle ([50b5a27](https://github.com/ionic-team/stencil/commit/50b5a27f84de84393f655a86e8f68015eec226cf))
 * **next:** optimizes mode entries ([634e394](https://github.com/ionic-team/stencil/commit/634e39439a3ddcd93db8c15afd793ac95d338a7e))
 * **next:** skip test files ([150d984](https://github.com/ionic-team/stencil/commit/150d98448dd1a50cd316048d775803f9889fa5be))
@@ -135,10 +245,8 @@ Some of main features with the `--next` compiler include:
 * **namespace:** fix namespaces w/ dashes ([84ef0b2](https://github.com/ionic-team/stencil/commit/84ef0b2562f0d8776b28ae1da728e87e3884a29e)), closes [#2116](https://github.com/ionic-team/stencil/issues/2116)
 * **next:** copy cmp assets to correct directory ([8887579](https://github.com/ionic-team/stencil/commit/88875797be0aa323578a193acb9e9d19fa6d46fb)), closes [#2120](https://github.com/ionic-team/stencil/issues/2120)
 * **next:** normalize paths ([#2124](https://github.com/ionic-team/stencil/issues/2124)) ([f980954](https://github.com/ionic-team/stencil/commit/f980954c33f38ca156558e9a54223512cd0bea6f))
-* **polyfills:** apply SystemJS polyfill conditionally ([#2118](https://github.com/ionic-team/stencil/issues/2118)) ([8b68d0c](https://github.com/ionic-team/stencil/commit/8b68d0cedcaaa7f2e5e6c13adbd015a7bc861a32)), closes [#2005](https://github.com/ionic-team/stencil/issues/2005)
 * **prerender:** add reflect to attributes while prerendering ([7974c41](https://github.com/ionic-team/stencil/commit/7974c41325889fc09491feea2ca21172ad86187c)), closes [#2119](https://github.com/ionic-team/stencil/issues/2119)
 * **reflect:** reflect attrs when no vnode attr ([2b948b2](https://github.com/ionic-team/stencil/commit/2b948b241b12acf3b988ecb84d1d633238a227ff))
-* **shadowDom:** improve supports shadow dom check ([8b5aa06](https://github.com/ionic-team/stencil/commit/8b5aa06e31919b16a9e11268441d250e254da36f)), closes [#2117](https://github.com/ionic-team/stencil/issues/2117)
 * **css:** add types to css parser/serializer and add more tests ([b9e4595](https://github.com/ionic-team/stencil/commit/b9e4595ca318bc88dc0938780567131ed4ea3692))
 * **gatsby:** ensure window references are avoided ([b00bed6](https://github.com/ionic-team/stencil/commit/b00bed6ea133dcc6e56be18d8f0f7f716e241ae9))
 * **hydrate:** fix const Context declaration ([d20f6ed](https://github.com/ionic-team/stencil/commit/d20f6edae3af4dfa13f88cc3b04bdc18f9ec617f))
@@ -147,6 +255,129 @@ Some of main features with the `--next` compiler include:
 * **next:** allow browser main thread compiler, fix ts imports ([64e3810](https://github.com/ionic-team/stencil/commit/64e38101dba8f138999947eb54f2991ccc9d85bf)), closes [#2130](https://github.com/ionic-team/stencil/issues/2130)
 * **dev-server:** visibility hidden connector iframe ([b86e537](https://github.com/ionic-team/stencil/commit/b86e537a2df2f66c13831cf6ad1df9ad8a3133e0)), closes [#1683](https://github.com/ionic-team/stencil/issues/1683)
 * **test:** lock in working version of fast-deep-equal ([8ad1540](https://github.com/ionic-team/stencil/commit/8ad15408e931f5263c1c2dbe221b20c712334572)), closes [#2133](https://github.com/ionic-team/stencil/issues/2133)
+* **css:** fix media whitespace removal ([918ae5a](https://github.com/ionic-team/stencil/commit/918ae5a96ee9ef57986485a767bea3b83977f06e))
+* **css-shim:** check for MutationObserver ([#2140](https://github.com/ionic-team/stencil/issues/2140)) ([f5140c4](https://github.com/ionic-team/stencil/commit/f5140c4df0762d2e2443338f9e90cdb916acbc94))
+* **next:** create collection-manifest.json ([d9b236a](https://github.com/ionic-team/stencil/commit/d9b236a6b79e3995ca10b99942e0379075a6fff5)), closes [#2150](https://github.com/ionic-team/stencil/issues/2150)
+* **next:** empty dist directories ([c4590ff](https://github.com/ionic-team/stencil/commit/c4590ff84149c1aaf5085b60827b7c5d815259c5))
+* **next:** fix collection output paths ([7097a9d](https://github.com/ionic-team/stencil/commit/7097a9d6da84c789fff975431a690695e662c7b4)), closes [#2149](https://github.com/ionic-team/stencil/issues/2149)
+* **next:** fix dist output ([aa57ebc](https://github.com/ionic-team/stencil/commit/aa57ebc66b295ea606dc2e967cb4e6d3505da186))
+* **next:** fix output dts relative path ([9e2679e](https://github.com/ionic-team/stencil/commit/9e2679efa1a24ad8f684678bf0334f685b8563d9))
+* **build:** fix global script and collection builds for distribution ([df83832](https://github.com/ionic-team/stencil/commit/df83832356b48e158d6535fd9ee8cc15d2b02593))
+* **dev-server:** ensure utf-8 ([ca42fca](https://github.com/ionic-team/stencil/commit/ca42fca8b6a9151f1e15637e5bc3b730d98974a4)), closes [#2161](https://github.com/ionic-team/stencil/issues/2161)
+* **next:** fix standalone compiler ([674019b](https://github.com/ionic-team/stencil/commit/674019b0d42ed95512fddc68764440fe7df56bbe)), closes [#2142](https://github.com/ionic-team/stencil/issues/2142)
+* **normalizePath:** ensure non-ascii paths can be normalized ([a97c2f5](https://github.com/ionic-team/stencil/commit/a97c2f542fe7d5ea5498b0f30046cab89b866ef8)), closes [#2161](https://github.com/ionic-team/stencil/issues/2161)
+* **normalizePath:** improve normalizePath ([addfdbc](https://github.com/ionic-team/stencil/commit/addfdbca71262cd8175c01e8b88c14bf6ca3e1f9))
+* **resolve:** resolve also w/ typescript compiler option paths ([69efa87](https://github.com/ionic-team/stencil/commit/69efa872470a204a09e485c822bfa3aff4e2e287))
+* **build:** always build esm for dist, both prod and dev mode ([06e90bf](https://github.com/ionic-team/stencil/commit/06e90bf530e4f95f6f4ba7f8d0139451aac49160))
+* **next:** add tick before stencil_appload dom event ([a71b3af](https://github.com/ionic-team/stencil/commit/a71b3af9d0b4c6af2a81a6b873389ad7e7fd38f4))
+* **next:** do not read collection of the same project ([76f46f2](https://github.com/ionic-team/stencil/commit/76f46f26486639708cf3bc1eafce5ae45110e7b4))
+* **next:** fix hydrate build w/ global script, w/out Context ([d65b0cc](https://github.com/ionic-team/stencil/commit/d65b0cc93a20763cd5154715a4a5f4fbab9fa66f))
+* **next:** improve createJsVarName ([d219327](https://github.com/ionic-team/stencil/commit/d2193271f4cbda03c51152e3e2767bf84a82eb20))
+* **next:** copy styles to collection build ([baf5bcf](https://github.com/ionic-team/stencil/commit/baf5bcf5fc6ab57e9002bb77b17447d18de1cd5e))
+* **next:** fix lerna collection ([24f59d3](https://github.com/ionic-team/stencil/commit/24f59d3a3ef519e63d9c67a3f9c27823433be0d0))
+* **next:** unregister service worker during e2e tests ([a34b88b](https://github.com/ionic-team/stencil/commit/a34b88b1c6d082460165fb70e8db1fc5878ff673))
+* **windows:** update puppeteer and jest, format components.d.ts ([558aa72](https://github.com/ionic-team/stencil/commit/558aa722428d39f0464721c1f6c2820a6c8d2319))
+* **css:** fix node_module css imports ([cc79e39](https://github.com/ionic-team/stencil/commit/cc79e39d3f874bcb1db733a4f9b15b0f0c5ccb42))
+* **hydrated:** fix hydrated config for legacy compiler ([1d1e900](https://github.com/ionic-team/stencil/commit/1d1e9006a3d287f2e782073d5172a9532d70c4ef))
+* **next:** emit fsChange event ([09986b0](https://github.com/ionic-team/stencil/commit/09986b0ed5a7b08703f9e96cc7a1441e487d29d7))
+* **compiler:** ignore irrelevant emitted files of ts transpiler ([#2212](https://github.com/ionic-team/stencil/issues/2212)) ([65d5f6e](https://github.com/ionic-team/stencil/commit/65d5f6e22fc66a17a16e783db14f71d8bf4f2461))
+* **core:** disable booleans_as_integers minification option ([e62f212](https://github.com/ionic-team/stencil/commit/e62f2126a3a9f30d9475f707db1b466084d0c863))
+* **css:** node_modules css imports ([cc7e154](https://github.com/ionic-team/stencil/commit/cc7e15494e267cdef96f5a066f18a6f75fc9bdb2))
+* **dev:** don't show warning for inputs without `value` ([#2209](https://github.com/ionic-team/stencil/issues/2209)) ([4744070](https://github.com/ionic-team/stencil/commit/47440706eef65e1fc1bd0915dad60b4d2dc474ef))
+* **listeners:** add host event listeners within constructor ([dc1ba91](https://github.com/ionic-team/stencil/commit/dc1ba915b829b3f9b3b945a0d9fc42b20c3d0cb1))
+* **vdom:** do not reset $slotRefNode$ when relocating nodes ([#2208](https://github.com/ionic-team/stencil/issues/2208)) ([ff7807d](https://github.com/ionic-team/stencil/commit/ff7807dbe1c11b61530c111fb2547bda9537ef3f))
+* **css:** do not remove /*! comments ([581be70](https://github.com/ionic-team/stencil/commit/581be704a3195f6ca0f1bff336aa7021fad67a5d))
+* **hydrate:** check for valid element nodeName ([9994c5b](https://github.com/ionic-team/stencil/commit/9994c5b2824e8c7749e753411459bb9243210da4)), closes [#2157](https://github.com/ionic-team/stencil/issues/2157)
+* **hydrate:** do not register cmps that should be excluded ([1ff1d79](https://github.com/ionic-team/stencil/commit/1ff1d798ee912516cc86b05b1e90c1649fdb93cf))
+* **next:** comment shadow css for client hydrate ([2b69230](https://github.com/ionic-team/stencil/commit/2b69230d52466c34c68cefe832d4a5e5fe25d8fe))
+* **next:** do not inject global style into e2e setContent unless set ([eb4c5d4](https://github.com/ionic-team/stencil/commit/eb4c5d4dac6c0f0331822130c62735140367607c)), closes [#2210](https://github.com/ionic-team/stencil/issues/2210)
+* **next:** fix promisify.custom and node util bundling ([51a9a5e](https://github.com/ionic-team/stencil/commit/51a9a5e9f17a29d0d0a6cede9a05a80442c14b0e))
+* **next:** fix styles hmr ([9a015e9](https://github.com/ionic-team/stencil/commit/9a015e90268be842bf640096ac87368d65c9ab31))
+* **ts:** all unused imports is a warning ([a515d17](https://github.com/ionic-team/stencil/commit/a515d17b24dd9fe010fdfa5881c8d9d68b9bedc5))
+* **worker:** use Blob for cross-origin web worker ([cbeec64](https://github.com/ionic-team/stencil/commit/cbeec6486b015ea7e9ef57c7892db12a3cb9eb07))
+* **next:** update jest presets ([7c83111](https://github.com/ionic-team/stencil/commit/7c831118b65ff6f13511796d1d1b75701b4d1c40))
+* **compile:** check for global ts before nodejs/webworker ts ([59cc59e](https://github.com/ionic-team/stencil/commit/59cc59eb98845914923e40fb6de414895d188ad9)), closes [#2239](https://github.com/ionic-team/stencil/issues/2239)
+* **compile:** enable vdomPropOrAttr by default ([9881011](https://github.com/ionic-team/stencil/commit/9881011d13ea3c90e178b17aa0ade4762b210a05)), closes [#2238](https://github.com/ionic-team/stencil/issues/2238)
+* **compiler:** prefix assets in prod mode ([#2236](https://github.com/ionic-team/stencil/issues/2236)) ([2c1a906](https://github.com/ionic-team/stencil/commit/2c1a9069f88c1f85f0ecaeecddc1d9fa1a478abe))
+* **next:** run custom output targets ([a9c0715](https://github.com/ionic-team/stencil/commit/a9c0715e6a05592515190b428478a3f7ff103048))
+* **prerender:** only comment original selectors for shadow css ([b5757df](https://github.com/ionic-team/stencil/commit/b5757df7c0737a3006668160da4d346047defd06))
+* **slot:** patch childNodes/children getters for browsers w/out shadow support ([efca632](https://github.com/ionic-team/stencil/commit/efca6326333d4e7da0faf19c4e37aeeec984e805)), closes [#1280](https://github.com/ionic-team/stencil/issues/1280)
+* **client:** default supportsShadow to when shadowDomShim false ([185f933](https://github.com/ionic-team/stencil/commit/185f933bab356b661d3c059b55c168439ed46842))
+* **compiler:** do not polyfill import.meta when using native import() ([#2250](https://github.com/ionic-team/stencil/issues/2250)) ([a644004](https://github.com/ionic-team/stencil/commit/a6440040edfebefd68a4189e9761039afe16b8db))
+* **compiler:** only rebuild after success ([#2248](https://github.com/ionic-team/stencil/issues/2248)) ([3a63c4f](https://github.com/ionic-team/stencil/commit/3a63c4fa038bbf593de05b9f5e851e54d1565221))
+* **next:** always reset process cwd before each build ([91617f8](https://github.com/ionic-team/stencil/commit/91617f89df6356f0bdd8a7a3c40ad182a115bebf))
+* **next:** clear module cache after updating/deleting module ([62971ea](https://github.com/ionic-team/stencil/commit/62971eab01483c38aa72a7f1b3633fa3d640406f))
+* **next:** simulate nodejs fs errors ([d735787](https://github.com/ionic-team/stencil/commit/d73578746ffa012e47b6c4492f01236f071fc6b9))
+* **listeners:** reattach host listeners ([8ea183e](https://github.com/ionic-team/stencil/commit/8ea183e0ed36fda81ca762a9fa96d13f48b27aba)), closes [#2253](https://github.com/ionic-team/stencil/issues/2253)
+* **prerender:** validate prerender config w/ prerender task ([26cc015](https://github.com/ionic-team/stencil/commit/26cc01575c3fdbf739268b044902a45e201b60d9))
+
+
+
+## 🏰 [1.8.11](https://github.com/ionic-team/stencil/compare/v1.8.10...v1.8.11) (2020-02-27)
+
+
+### Features
+
+* **hydrate:** excludeComponents option ([a75f76a](https://github.com/ionic-team/stencil/commit/a75f76a0ef915d3a75eb688a3cdda65bbfb0f676))
+
+
+
+## 🎿 [1.8.10](https://github.com/ionic-team/stencil/compare/v1.8.9...v1.8.10) (2020-02-25)
+
+
+### Bug Fixes
+
+* **minify:** do not remove console.debug() ([acd7209](https://github.com/ionic-team/stencil/commit/acd72094ced9d6bcf14b2801ab5f307c8ff8dfe2)), closes [#2216](https://github.com/ionic-team/stencil/issues/2216)
+
+
+### Features
+
+* **input:** update JSX InputHTMLAttributes ([38ffc86](https://github.com/ionic-team/stencil/commit/38ffc865831f364a5b6bb54a2d7b99cc6a35df56)), closes [#2218](https://github.com/ionic-team/stencil/issues/2218)
+* **mock-doc:** add global HTML constructors to node test global ([5036a59](https://github.com/ionic-team/stencil/commit/5036a5987ca3478ae9002aef2d67215af88fa616))
+* **rollup:** update to rollup 1.31.1 ([a883b93](https://github.com/ionic-team/stencil/commit/a883b936e48fbcc9f36fa2218fa0048db3f9ca8c))
+* **typescript:** update to typescript 3.8.2 ([aa4d189](https://github.com/ionic-team/stencil/commit/aa4d1898279ee01fb382a5bf94c336a939bc8025))
+
+
+
+## ⛄️ [1.8.9](https://github.com/ionic-team/stencil/compare/v1.8.8...v1.8.9) (2020-02-18)
+
+- Backported runtime improvements from 1.9.x builds
+
+
+
+## 🏙 [1.8.8](https://github.com/ionic-team/stencil/compare/v1.8.7...v1.8.8) (2020-02-12)
+
+
+### Bug Fixes
+
+* **hydrate:** do not overwrite parent shadow style when multiple scoped ([a10a37f](https://github.com/ionic-team/stencil/commit/a10a37f327ad56b7dc4c0f52c9804000c38c20aa))
+* **slotted:** fix applying polyfilled slotted css to nested slot ([e4229db](https://github.com/ionic-team/stencil/commit/e4229db51d7be1bc1a7e94f84ee8e0f2cea001fe)), closes [#2183](https://github.com/ionic-team/stencil/issues/2183)
+
+
+
+## 🏎 [1.8.7](https://github.com/ionic-team/stencil/compare/v1.8.6...v1.8.7) (2020-02-04)
+
+
+### Bug Fixes
+
+* **runtime:** render svg #text nodes ([#2176](https://github.com/ionic-team/stencil/issues/2176)) ([f623bf7](https://github.com/ionic-team/stencil/commit/f623bf77ec6c3899a6795cf5e5139ece569f0d96))
+* **slot:** correct order of nested slots ([800292f](https://github.com/ionic-team/stencil/commit/800292fdfeec2420cd0a85c041a3682f9dc5cf4d)), closes [#2159](https://github.com/ionic-team/stencil/issues/2159)
+* **slot:** do not render light dom without unnamed slot ([8298659](https://github.com/ionic-team/stencil/commit/829865936a0448c6988f77d259734c93245e58f1)), closes [#2162](https://github.com/ionic-team/stencil/issues/2162)
+
+
+
+## 🚚 [1.8.6](https://github.com/ionic-team/stencil/compare/v1.8.5...v1.8.6) (2020-01-24)
+
+Updated:
+
+- TypeScript 3.7.5
+- Rollup 1.29.1
+- Terser 4.6.3
+
+### Bug Fixes
+
+* **dist:** optionally provide defineCustomElements window ([dfca3ed](https://github.com/ionic-team/stencil/commit/dfca3edae2831652e84633eff4218535e41099d1))
+* **ie11:** indexOf instead of includes ([2f16d2a](https://github.com/ionic-team/stencil/commit/2f16d2aa6372e8043cc36f61aa13c7bde40519bb)), closes [#2151](https://github.com/ionic-team/stencil/issues/2151)
 
 
 

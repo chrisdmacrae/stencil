@@ -1,32 +1,31 @@
 import * as d from '../declarations';
-import { isDevClient, sendMsg } from './dev-server-utils';
+import { isDevClient, isDevModule, sendMsg } from './dev-server-utils';
 import { normalizePath } from '@utils';
 import { serveDevClient } from './serve-dev-client';
 import { serveFile } from './serve-file';
 import { serve404, serve404Content } from './serve-404';
 import { serve500 } from './serve-500';
+import { serveCompilerRequest } from './serve-compiler-request';
 import { serveDirectoryIndex } from './serve-directory-index';
 import * as http from 'http';
 import path from 'path';
 import * as url from 'url';
 
-
 export function createRequestHandler(devServerConfig: d.DevServerConfig, sys: d.CompilerSystem) {
-
   return async function(incomingReq: http.IncomingMessage, res: http.ServerResponse) {
     try {
       const req = normalizeHttpRequest(devServerConfig, incomingReq);
 
       if (req.url === '') {
-        res.writeHead(302, { 'location': '/' });
+        res.writeHead(302, { location: '/' });
 
         if (devServerConfig.logRequests) {
           sendMsg(process, {
             requestLog: {
               method: req.method,
               url: req.url,
-              status: 302
-            }
+              status: 302,
+            },
           });
         }
 
@@ -37,14 +36,18 @@ export function createRequestHandler(devServerConfig: d.DevServerConfig, sys: d.
         return serveDevClient(devServerConfig, sys, req, res);
       }
 
+      if (isDevModule(req.pathname)) {
+        return serveCompilerRequest(devServerConfig, req, res);
+      }
+
       if (!req.url.startsWith(devServerConfig.basePath)) {
         if (devServerConfig.logRequests) {
           sendMsg(process, {
             requestLog: {
               method: req.method,
               url: req.url,
-              status: 404
-            }
+              status: 404,
+            },
           });
         }
 
@@ -63,7 +66,6 @@ export function createRequestHandler(devServerConfig: d.DevServerConfig, sys: d.
             return serveDirectoryIndex(devServerConfig, sys, req, res);
           }
         }
-
       } catch (e) {}
 
       if (isValidHistoryApi(devServerConfig, req)) {
@@ -75,18 +77,15 @@ export function createRequestHandler(devServerConfig: d.DevServerConfig, sys: d.
             req.filePath = indexFilePath;
             return serveFile(devServerConfig, sys, req, res);
           }
-
         } catch (e) {}
       }
 
       return serve404(devServerConfig, req, res);
-
     } catch (e) {
       return serve500(devServerConfig, incomingReq as any, res, e);
     }
   };
 }
-
 
 function normalizeHttpRequest(devServerConfig: d.DevServerConfig, incomingReq: http.IncomingMessage) {
   const req: d.HttpRequest = {
@@ -94,7 +93,7 @@ function normalizeHttpRequest(devServerConfig: d.DevServerConfig, incomingReq: h
     headers: incomingReq.headers as any,
     acceptHeader: (incomingReq.headers && typeof incomingReq.headers.accept === 'string' && incomingReq.headers.accept) || '',
     url: (incomingReq.url || '').trim() || '',
-    host: (incomingReq.headers && typeof incomingReq.headers.host === 'string' && incomingReq.headers.host) || null
+    host: (incomingReq.headers && typeof incomingReq.headers.host === 'string' && incomingReq.headers.host) || null,
   };
 
   const parsedUrl = url.parse(req.url);
@@ -105,15 +104,10 @@ function normalizeHttpRequest(devServerConfig: d.DevServerConfig, incomingReq: h
     req.pathname = '/' + req.pathname.substring(devServerConfig.basePath.length);
   }
 
-  req.filePath = normalizePath(path.normalize(
-    path.join(devServerConfig.root,
-      path.relative('/', req.pathname)
-    )
-  ));
+  req.filePath = normalizePath(path.normalize(path.join(devServerConfig.root, path.relative('/', req.pathname))));
 
   return req;
 }
-
 
 export function isValidHistoryApi(devServerConfig: d.DevServerConfig, req: d.HttpRequest) {
   if (!devServerConfig.historyApiFallback) {

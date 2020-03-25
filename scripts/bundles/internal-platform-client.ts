@@ -3,13 +3,13 @@ import { basename, join } from 'path';
 import { BuildOptions } from '../utils/options';
 import { aliasPlugin } from './plugins/alias-plugin';
 import { replacePlugin } from './plugins/replace-plugin';
-import { reorderCoreStatementsPlugin } from '../utils/reorder-statements';
+import { reorderCoreStatementsPlugin } from './plugins/reorder-statements';
 import { getBanner } from '../utils/banner';
 import { writePkgJson } from '../utils/write-pkg-json';
 import { rollup, RollupOptions, OutputOptions } from 'rollup';
 import glob from 'glob';
 import ts from 'typescript';
-
+import { minify } from 'terser';
 
 export async function internalClient(opts: BuildOptions) {
   const inputClientDir = join(opts.transpiledDir, 'client');
@@ -25,24 +25,33 @@ export async function internalClient(opts: BuildOptions) {
   writePkgJson(opts, outputInternalClientDir, {
     name: '@stencil/core/internal/client',
     description: 'Stencil internal client platform to be imported by the Stencil Compiler. Breaking changes can and will happen at any time.',
-    main: 'index.mjs'
+    main: 'index.mjs',
   });
 
   const output: OutputOptions = {
     format: 'es',
     dir: outputInternalClientDir,
     entryFileNames: '[name].mjs',
-    chunkFileNames: '[name].[hash].mjs',
-    banner: getBanner(opts, 'Stencil Client Platform')
-  }
+    chunkFileNames: '[name].mjs',
+    banner: getBanner(opts, 'Stencil Client Platform'),
+    preferConst: true,
+  };
 
   const internalClientBundle: RollupOptions = {
     input: join(inputClientDir, 'index.js'),
     output,
-    treeshake:{
+    treeshake: {
       pureExternalModules: true,
     },
     plugins: [
+      {
+        name: 'internalClientPlugin',
+        resolveId(importee) {
+          if (importee === '@platform') {
+            return join(inputClientDir, 'index.js');
+          }
+        },
+      },
       {
         name: 'internalClientRuntimeCssShim',
         resolveId(importee) {
@@ -57,21 +66,26 @@ export async function internalClient(opts: BuildOptions) {
           if (id === './polyfills/css-shim.js') {
             const rollupBuild = await rollup({
               input: join(inputClientDir, 'polyfills', 'css-shim', 'index.js'),
-              onwarn: (message) => {
+              onwarn: message => {
                 if (/top level of an ES module/.test(message as any)) return;
                 console.error(message);
-              }
+              },
             });
 
             const { output } = await rollupBuild.generate({ format: 'es' });
 
             const transpileToEs5 = ts.transpileModule(output[0].code, {
               compilerOptions: {
-                target: ts.ScriptTarget.ES5
-              }
+                target: ts.ScriptTarget.ES5,
+              },
             });
 
-            const code = transpileToEs5.outputText;
+            let code = transpileToEs5.outputText;
+
+            if (opts.isProd) {
+              const minifyResults = minify(code);
+              code = minifyResults.code;
+            }
 
             const dest = join(outputInternalClientPolyfillsDir, 'css-shim.js');
             await fs.writeFile(dest, code);
@@ -79,7 +93,7 @@ export async function internalClient(opts: BuildOptions) {
             return code;
           }
           return null;
-        }
+        },
       },
 
       {
@@ -90,29 +104,28 @@ export async function internalClient(opts: BuildOptions) {
             return join(opts.srcDir, 'client', 'polyfills', fileName);
           }
           return null;
-        }
+        },
       },
 
       aliasPlugin(opts),
       replacePlugin(opts),
       reorderCoreStatementsPlugin(),
-    ]
+    ],
   };
 
-  return [
-    internalClientBundle
-  ];
-};
-
+  return [internalClientBundle];
+}
 
 async function copyPolyfills(opts: BuildOptions, outputInternalClientPolyfillsDir: string) {
   const srcPolyfillsDir = join(opts.srcDir, 'client', 'polyfills');
 
   const srcPolyfillFiles = glob.sync('*.js', { cwd: srcPolyfillsDir });
 
-  await Promise.all(srcPolyfillFiles.map(async fileName => {
-    const src = join(srcPolyfillsDir, fileName);
-    const dest = join(outputInternalClientPolyfillsDir, fileName);
-    await fs.copyFile(src, dest);
-  }));
+  await Promise.all(
+    srcPolyfillFiles.map(async fileName => {
+      const src = join(srcPolyfillsDir, fileName);
+      const dest = join(outputInternalClientPolyfillsDir, fileName);
+      await fs.copyFile(src, dest);
+    }),
+  );
 }

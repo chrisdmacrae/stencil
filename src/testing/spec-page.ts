@@ -1,50 +1,60 @@
-import { BuildConditionals, ComponentCompilerMeta, ComponentRuntimeMeta, ComponentTestingConstructor, HostRef, LazyBundlesRuntimeData, NewSpecPageOptions, SpecPage } from '@stencil/core/internal';
-import { formatLazyBundleRuntimeMeta, getBuildFeatures } from '../compiler';
+import {
+  bootstrapLazy,
+  flushAll,
+  flushLoadModule,
+  flushQueue,
+  getHostRef,
+  insertVdomAnnotations,
+  registerComponents,
+  registerContext,
+  registerModule,
+  renderVdom,
+  resetPlatform,
+  startAutoApplyChanges,
+  styles,
+  win,
+  writeTask,
+  setSupportsShadowDom,
+} from '@stencil/core/internal/testing';
+import { BUILD } from '@app-data';
+import { ComponentCompilerMeta, ComponentRuntimeMeta, ComponentTestingConstructor, HostRef, LazyBundlesRuntimeData, NewSpecPageOptions, SpecPage } from '@stencil/core/internal';
+import { formatLazyBundleRuntimeMeta } from '@utils';
+import { getBuildFeatures } from '../compiler/app-core/app-data';
 import { resetBuildConditionals } from './reset-build-conditionals';
-
 
 export async function newSpecPage(opts: NewSpecPageOptions): Promise<SpecPage> {
   if (opts == null) {
     throw new Error(`NewSpecPageOptions required`);
   }
 
-  if (!Array.isArray(opts.components) || opts.components.length === 0) {
-    throw new Error(`opts.components required`);
-  }
-
-  // * WHY THE REQUIRES?!
-  // using require() in a closure so jest has a moment
-  // to jest.mock w/ moduleNameMapper in the jest config
-  // otherwise the require() happens at the top of the file before jest is setup
-  const bc = require('@stencil/core/internal/app-data') as { BUILD: BuildConditionals };
-  const testingPlatform = require('@stencil/core/internal/platform');
-
   // reset the platform for this new test
-  testingPlatform.resetPlatform();
-  resetBuildConditionals(bc.BUILD);
+  resetPlatform();
+  resetBuildConditionals(BUILD);
 
-  testingPlatform.registerContext(opts.context);
-  testingPlatform.registerComponents(opts.components);
+  registerContext(opts.context);
+
+  if (Array.isArray(opts.components)) {
+    registerComponents(opts.components);
+  }
 
   if (opts.hydrateClientSide) {
     opts.includeAnnotations = true;
   }
   if (opts.hydrateServerSide) {
     opts.includeAnnotations = true;
-    testingPlatform.supportsShadowDom = false;
+    setSupportsShadowDom(false);
   } else {
     opts.includeAnnotations = !!opts.includeAnnotations;
     if (opts.supportsShadowDom === false) {
-      testingPlatform.supportsShadowDom = false;
+      setSupportsShadowDom(false);
     } else {
-      testingPlatform.supportsShadowDom = true;
+      setSupportsShadowDom(true);
     }
   }
-  bc.BUILD.cssAnnotations = opts.includeAnnotations;
+  BUILD.cssAnnotations = opts.includeAnnotations;
 
   const cmpTags = new Set<string>();
 
-  const win = testingPlatform.win as Window;
   (win as any)['__stencil_spec_options'] = opts;
   const doc = win.document;
 
@@ -52,15 +62,15 @@ export async function newSpecPage(opts: NewSpecPageOptions): Promise<SpecPage> {
     win: win,
     doc: doc,
     body: doc.body as any,
-    build: bc.BUILD as BuildConditionals,
-    styles: testingPlatform.styles as Map<string, string>,
-    setContent: (html: string) => {
+    build: BUILD,
+    styles: styles as Map<string, string>,
+    setContent: html => {
       doc.body.innerHTML = html;
-      return testingPlatform.flushAll();
+      return flushAll();
     },
-    waitForChanges: (): Promise<void> => testingPlatform.flushAll(),
-    flushLoadModule: (bundleId?: string): Promise<void> => testingPlatform.flushLoadModule(bundleId),
-    flushQueue: (): Promise<void> => testingPlatform.flushQueue()
+    waitForChanges: flushAll,
+    flushLoadModule: flushLoadModule,
+    flushQueue: flushQueue,
   };
 
   const lazyBundles: LazyBundlesRuntimeData = opts.components.map((Cstr: ComponentTestingConstructor) => {
@@ -71,44 +81,50 @@ export async function newSpecPage(opts: NewSpecPageOptions): Promise<SpecPage> {
     cmpTags.add(Cstr.COMPILER_META.tagName);
     Cstr.isProxied = false;
 
-    proxyComponentLifeCycles(testingPlatform, Cstr);
+    proxyComponentLifeCycles(Cstr);
 
-    const bundleId = `${Cstr.COMPILER_META.tagName}.${(Math.round(Math.random() * 899999) + 100000)}`;
-    const lazyBundleRuntimeMeta = formatLazyBundleRuntimeMeta(bundleId, [Cstr.COMPILER_META]);
-
-    testingPlatform.registerModule(bundleId, Cstr);
-
-    if (Array.isArray(Cstr.COMPILER_META.styles)) {
-      Cstr.COMPILER_META.styles.forEach(style => {
-        testingPlatform.styles.set(style.styleId, style.styleStr);
+    const textBundleId = `${Cstr.COMPILER_META.tagName}.${(Math.round(Math.random() * 899999) + 100000)}`;
+    const stylesMeta = Cstr.COMPILER_META.styles;
+    let bundleId = textBundleId as any;
+    if (Array.isArray(stylesMeta)) {
+      stylesMeta.forEach(style => {
+        styles.set(style.styleId, style.styleStr);
       });
+      if (stylesMeta.length > 1) {
+        bundleId = {};
+        stylesMeta.forEach(style => {
+          bundleId[style.styleId] = textBundleId;
+        });
+      }
     }
+    registerModule(bundleId, Cstr);
 
+    const lazyBundleRuntimeMeta = formatLazyBundleRuntimeMeta(bundleId, [Cstr.COMPILER_META]);
     return lazyBundleRuntimeMeta;
   });
 
   const cmpCompilerMeta = opts.components.map(Cstr => Cstr.COMPILER_META as ComponentCompilerMeta);
-
   const cmpBuild = getBuildFeatures(cmpCompilerMeta);
   if (opts.strictBuild) {
-    Object.assign(bc.BUILD, cmpBuild);
+    Object.assign(BUILD, cmpBuild);
   } else {
     Object.keys(cmpBuild).forEach(key => {
       if ((cmpBuild as any)[key] === true) {
-        (bc.BUILD as any)[key] = true;
+        (BUILD as any)[key] = true;
       }
     });
   }
-  bc.BUILD.asyncLoading = true;
+  BUILD.asyncLoading = true;
   if (opts.hydrateClientSide) {
-    bc.BUILD.hydrateClientSide = true;
-    bc.BUILD.hydrateServerSide = false;
-
+    BUILD.hydrateClientSide = true;
+    BUILD.hydrateServerSide = false;
   } else if (opts.hydrateServerSide) {
-    bc.BUILD.hydrateServerSide = true;
-    bc.BUILD.hydrateClientSide = false;
+    BUILD.hydrateServerSide = true;
+    BUILD.hydrateClientSide = false;
   }
-  bc.BUILD.cloneNodeFix = false;
+  BUILD.cloneNodeFix = false;
+  BUILD.shadowDomShim = false;
+  BUILD.safari10 = false;
 
   (page as any).flush = () => {
     console.warn(`DEPRECATED: page.flush(), please use page.waitForChanges() instead`);
@@ -145,21 +161,21 @@ export async function newSpecPage(opts: NewSpecPageOptions): Promise<SpecPage> {
     } catch (e) {}
   }
 
-  testingPlatform.bootstrapLazy(lazyBundles);
+  bootstrapLazy(lazyBundles);
 
   if (typeof opts.template === 'function') {
     const cmpMeta: ComponentRuntimeMeta = {
       $flags$: 0,
-      $tagName$: 'body'
+      $tagName$: 'body',
     };
     const ref: HostRef = {
       $ancestorComponent$: undefined,
       $flags$: 0,
       $modeName$: undefined,
       $cmpMeta$: cmpMeta,
-      $hostElement$: page.body
+      $hostElement$: page.body,
     };
-    testingPlatform.renderVdom(ref, opts.template());
+    renderVdom(ref, opts.template());
   } else if (typeof opts.html === 'string') {
     page.body.innerHTML = opts.html;
   }
@@ -182,25 +198,25 @@ export async function newSpecPage(opts: NewSpecPageOptions): Promise<SpecPage> {
         return firstElementChild as any;
       }
       return null;
-    }
+    },
   });
 
   Object.defineProperty(page, 'rootInstance', {
     get() {
-      const hostRef = testingPlatform.getHostRef(page.root);
+      const hostRef = getHostRef(page.root);
       if (hostRef != null) {
         return hostRef.$lazyInstance$;
       }
       return null;
-    }
+    },
   });
 
   if (opts.hydrateServerSide) {
-    testingPlatform.insertVdomAnnotations(doc);
+    insertVdomAnnotations(doc);
   }
 
   if (opts.autoApplyChanges) {
-    testingPlatform.startAutoApplyChanges();
+    startAutoApplyChanges();
     page.waitForChanges = () => {
       console.error('waitForChanges() cannot be used manually if the "startAutoApplyChanges" option is enabled');
       return Promise.resolve();
@@ -209,8 +225,7 @@ export async function newSpecPage(opts: NewSpecPageOptions): Promise<SpecPage> {
   return page;
 }
 
-
-function proxyComponentLifeCycles(platform: any, Cstr: ComponentTestingConstructor) {
+function proxyComponentLifeCycles(Cstr: ComponentTestingConstructor) {
   if (typeof Cstr.prototype.__componentWillLoad === 'function') {
     Cstr.prototype.componentWillLoad = Cstr.prototype.__componentWillLoad;
     Cstr.prototype.__componentWillLoad = null;
@@ -229,9 +244,9 @@ function proxyComponentLifeCycles(platform: any, Cstr: ComponentTestingConstruct
     Cstr.prototype.componentWillLoad = function() {
       const result = this.__componentWillLoad();
       if (result != null && typeof result.then === 'function') {
-        platform.writeTask(() => result);
+        writeTask(() => result);
       } else {
-        platform.writeTask(() => Promise.resolve());
+        writeTask(() => Promise.resolve());
       }
       return result;
     };
@@ -242,9 +257,9 @@ function proxyComponentLifeCycles(platform: any, Cstr: ComponentTestingConstruct
     Cstr.prototype.componentWillUpdate = function() {
       const result = this.__componentWillUpdate();
       if (result != null && typeof result.then === 'function') {
-        platform.writeTask(() => result);
+        writeTask(() => result);
       } else {
-        platform.writeTask(() => Promise.resolve());
+        writeTask(() => Promise.resolve());
       }
       return result;
     };
@@ -255,15 +270,14 @@ function proxyComponentLifeCycles(platform: any, Cstr: ComponentTestingConstruct
     Cstr.prototype.componentWillRender = function() {
       const result = this.__componentWillRender();
       if (result != null && typeof result.then === 'function') {
-        platform.writeTask(() => result);
+        writeTask(() => result);
       } else {
-        platform.writeTask(() => Promise.resolve());
+        writeTask(() => Promise.resolve());
       }
       return result;
     };
   }
 }
-
 
 function findRootComponent(cmpTags: Set<string>, node: Element): any {
   if (node != null) {
@@ -285,25 +299,4 @@ function findRootComponent(cmpTags: Set<string>, node: Element): any {
     }
   }
   return null;
-}
-
-
-export function flushAll() {
-  // see comment at the bottom of the page
-  const testingPlatform = require('@stencil/core/internal/platform');
-  return testingPlatform.flushAll();
-}
-
-
-export function flushQueue() {
-  // see comment at the bottom of the page
-  const testingPlatform = require('@stencil/core/internal/platform');
-  return testingPlatform.flushQueue();
-}
-
-
-export function flushLoadModule() {
-  // see comment at the bottom of the page
-  const testingPlatform = require('@stencil/core/internal/platform');
-  return testingPlatform.flushLoadModule();
 }

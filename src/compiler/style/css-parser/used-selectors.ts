@@ -1,52 +1,53 @@
+export const getUsedSelectors = (elm: Element) => {
+  const usedSelectors: UsedSelectors = {
+    attrs: new Set(),
+    classNames: new Set(),
+    ids: new Set(),
+    tags: new Set(),
+  };
+  collectUsedSelectors(usedSelectors, elm);
+  return usedSelectors;
+};
 
+const collectUsedSelectors = (usedSelectors: UsedSelectors, elm: Element) => {
+  if (elm != null && elm.nodeType === 1) {
+    // tags
+    const children = elm.children;
+    const tagName = elm.nodeName.toLowerCase();
+    usedSelectors.tags.add(tagName);
 
-export class UsedSelectors {
-  tags = new Set<string>();
-  classNames = new Set<string>();
-  ids = new Set<string>();
-  attrs = new Set<string>();
+    // attributes
+    const attributes = elm.attributes;
+    for (let i = 0, l = attributes.length; i < l; i++) {
+      const attr = attributes.item(i);
+      const attrName = attr.name.toLowerCase();
 
-  constructor(elm: Element) {
-    this.collectSelectors(elm);
-  }
+      usedSelectors.attrs.add(attrName);
 
-  private collectSelectors(elm: Element) {
-    if (elm != null && elm.tagName) {
-
-      // tags
-      const tagName = elm.tagName.toLowerCase();
-      this.tags.add(tagName);
-
-      // attributes
-      const attributes = elm.attributes;
-      for (let i = 0, l = attributes.length; i < l; i++) {
-        const attr = attributes.item(i);
-
-        const attrName = attr.name.toLowerCase();
-
-        if (attrName === 'class') {
-          // classes
-          const classList = elm.classList;
-          for (let i = 0, l = classList.length; i < l; i++) {
-            this.classNames.add(classList.item(i));
-          }
-
-        } else if (attrName === 'style') {
-          continue;
-
-        } else if (attrName === 'id') {
-          // ids
-          this.ids.add(attr.value);
-
-        } else {
-          this.attrs.add(attrName);
+      if (attrName === 'class') {
+        // classes
+        const classList = elm.classList;
+        for (let i = 0, l = classList.length; i < l; i++) {
+          usedSelectors.classNames.add(classList.item(i));
         }
+      } else if (attrName === 'id') {
+        // ids
+        usedSelectors.ids.add(attr.value);
       }
+    }
 
-      // drill down
-      for (let i = 0, l = elm.children.length; i < l; i++) {
-        this.collectSelectors(elm.children[i]);
+    // drill down
+    if (children) {
+      for (let i = 0, l = children.length; i < l; i++) {
+        collectUsedSelectors(usedSelectors, children[i]);
       }
     }
   }
+};
+
+export interface UsedSelectors {
+  tags: Set<string>;
+  classNames: Set<string>;
+  ids: Set<string>;
+  attrs: Set<string>;
 }

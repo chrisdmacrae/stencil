@@ -2,30 +2,20 @@ import { Plugin } from 'rollup';
 import { BuildOptions } from '../../utils/options';
 import { join } from 'path';
 
-
 export function aliasPlugin(opts: BuildOptions): Plugin {
-
   const alias = new Map([
     ['@app-data', '@stencil/core/internal/app-data'],
     ['@app-globals', '@stencil/core/internal/app-globals'],
     ['@hydrate-factory', '@stencil/core/hydrate-factory'],
-    ['@mock-doc', '@stencil/core/mock-doc'],
-    ['@platform', '@stencil/core/internal/platform'],
-    ['@runtime', '@stencil/core/internal/runtime'],
-    ['@testing', '@stencil/core/testing'],
+    ['@stencil/core/mock-doc', '@stencil/core/mock-doc'],
+    ['@stencil/core/testing', '@stencil/core/testing'],
   ]);
 
   // ensure we use the same one
-  const helperResolvers = new Set([
-    'is-resolvable',
-    'path-is-absolute',
-    'util',
-  ]);
+  const helperResolvers = new Set(['is-resolvable', 'path-is-absolute']);
 
   // ensure we use the same one
-  const nodeResolvers = new Map([
-    ['source-map', join(opts.nodeModulesDir, 'source-map', 'source-map.js')],
-  ]);
+  const nodeResolvers = new Map([['source-map', join(opts.nodeModulesDir, 'source-map', 'source-map.js')]]);
 
   const empty = new Set([
     // we never use chalk, but many projects still pull it in
@@ -42,6 +32,9 @@ export function aliasPlugin(opts: BuildOptions): Plugin {
           external: true,
         };
       }
+      if (id === '@runtime') {
+        return join(opts.transpiledDir, 'runtime', 'index.js');
+      }
       if (id === '@utils') {
         return join(opts.transpiledDir, 'utils', 'index.js');
       }
@@ -55,6 +48,6 @@ export function aliasPlugin(opts: BuildOptions): Plugin {
         return nodeResolvers.get(id);
       }
       return null;
-    }
-  }
+    },
+  };
 }

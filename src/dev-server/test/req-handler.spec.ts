@@ -1,18 +1,16 @@
 import * as d from '@stencil/core/declarations';
 import { appendDevServerClientIframe } from '../serve-file';
 import { createRequestHandler } from '../request-handler';
-import { createSystem } from '../../compiler_next/sys/stencil-sys';
+import { createSystem } from '../../compiler/sys/stencil-sys';
 import { mockConfig } from '@stencil/core/testing';
 import { normalizePath } from '@utils';
-import { validateConfig } from '@stencil/core/compiler';
+import { validateConfig } from '../../compiler/config/validate-config';
 import { validateDevServer } from '../../compiler/config/validate-dev-server';
 import nodeFs from 'fs';
 import http from 'http';
 import path from 'path';
 
-
 describe('request-handler', () => {
-
   let config: d.DevServerConfig;
   let sys: d.CompilerSystem;
   let req: http.IncomingMessage;
@@ -21,10 +19,10 @@ describe('request-handler', () => {
   const tmplDirPath = normalizePath(path.join(__dirname, '..', 'templates', 'directory-index.html'));
   const tmplDir = nodeFs.readFileSync(tmplDirPath, 'utf8');
   const contentTypes = {
-    'html': 'text/html',
-    'css': 'text/css',
-    'js': 'application/javascript',
-    'svg': 'image/svg+xml'
+    html: 'text/html',
+    css: 'text/css',
+    js: 'application/javascript',
+    svg: 'image/svg+xml',
   };
 
   beforeEach(async () => {
@@ -38,7 +36,7 @@ describe('request-handler', () => {
       contentTypes: contentTypes,
       devServerDir: normalizePath(path.join(__dirname, '..')),
       root: normalizePath(path.join(root, 'www')),
-      basePath: '/'
+      basePath: '/',
     };
 
     await sys.mkdir(stencilConfig.devServer.root);
@@ -65,17 +63,16 @@ describe('request-handler', () => {
   });
 
   describe('historyApiFallback', () => {
-
     it('should load historyApiFallback index.html when dot in the url disableDotRule true', async () => {
       await sys.writeFile(path.join(root, 'www', 'index.html'), `root-index`);
       config.historyApiFallback = {
         index: 'index.html',
-        disableDotRule: true
+        disableDotRule: true,
       };
       const handler = createRequestHandler(config, sys);
 
       req.headers = {
-        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8'
+        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
       };
       req.url = '/about.us';
       req.method = 'GET';
@@ -87,12 +84,12 @@ describe('request-handler', () => {
     it('should not load historyApiFallback index.html when dot in the url', async () => {
       await sys.writeFile(path.join(root, 'www', 'index.html'), `root-index`);
       config.historyApiFallback = {
-        index: 'index.html'
+        index: 'index.html',
       };
       const handler = createRequestHandler(config, sys);
 
       req.headers = {
-        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8'
+        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
       };
       req.url = '/about.us';
       req.method = 'GET';
@@ -104,12 +101,12 @@ describe('request-handler', () => {
     it('should not load historyApiFallback index.html when no text/html accept header', async () => {
       await sys.writeFile(path.join(root, 'www', 'index.html'), `root-index`);
       config.historyApiFallback = {
-        index: 'index.html'
+        index: 'index.html',
       };
       const handler = createRequestHandler(config, sys);
 
       req.headers = {
-        accept: '*/*'
+        accept: '*/*',
       };
       req.url = '/about-us';
       req.method = 'GET';
@@ -121,12 +118,12 @@ describe('request-handler', () => {
     it('should not load historyApiFallback index.html when not GET request', async () => {
       await sys.writeFile(path.join(root, 'www', 'index.html'), `root-index`);
       config.historyApiFallback = {
-        index: 'index.html'
+        index: 'index.html',
       };
       const handler = createRequestHandler(config, sys);
 
       req.headers = {
-        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8'
+        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
       };
       req.url = '/about-us';
       req.method = 'POST';
@@ -138,37 +135,37 @@ describe('request-handler', () => {
     it('should load historyApiFallback index.html when no trailing slash', async () => {
       await sys.writeFile(path.join(root, 'www', 'index.html'), `root-index`);
       config.historyApiFallback = {
-        index: 'index.html'
+        index: 'index.html',
       };
       const handler = createRequestHandler(config, sys);
 
       req.headers = {
-        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8'
+        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
       };
       req.url = '/about-us';
 
       await handler(req, res);
       expect(res.$statusCode).toBe(200);
       expect(res.$content).toContain('root-index');
-      expect(res.$contentType).toBe('text/html');
+      expect(res.$contentType).toBe('text/html;charset=UTF-8');
     });
 
     it('should load historyApiFallback index.html when trailing slash', async () => {
       await sys.writeFile(path.join(root, 'www', 'index.html'), `root-index`);
       config.historyApiFallback = {
-        index: 'index.html'
+        index: 'index.html',
       };
       const handler = createRequestHandler(config, sys);
 
       req.headers = {
-        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8'
+        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
       };
       req.url = '/about-us/';
 
       await handler(req, res);
       expect(res.$statusCode).toBe(200);
       expect(res.$content).toContain('root-index');
-      expect(res.$contentType).toBe('text/html');
+      expect(res.$contentType).toBe('text/html;charset=UTF-8');
     });
 
     it('should list directory when ended in slash and not using historyApiFallback', async () => {
@@ -179,20 +176,18 @@ describe('request-handler', () => {
       const handler = createRequestHandler(config, sys);
 
       req.headers = {
-        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8'
+        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
       };
       req.url = '/about-us/';
 
       await handler(req, res);
       expect(res.$statusCode).toBe(200);
       expect(res.$content).toContain('tmpl-dir');
-      expect(res.$contentType).toBe('text/html');
+      expect(res.$contentType).toBe('text/html;charset=UTF-8');
     });
-
   });
 
   describe('serve directory index', () => {
-
     it('should load index.html in directory', async () => {
       await sys.mkdir(path.join(root, 'www', 'about-us'));
       await sys.writeFile(path.join(root, 'www', 'about-us.html'), `about-us.html page`);
@@ -201,14 +196,14 @@ describe('request-handler', () => {
       const handler = createRequestHandler(config, sys);
 
       req.headers = {
-        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8'
+        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
       };
       req.url = '/about-us/';
 
       await handler(req, res);
       expect(res.$statusCode).toBe(200);
       expect(res.$content).toContain('about-us-index-directory');
-      expect(res.$contentType).toBe('text/html');
+      expect(res.$contentType).toBe('text/html;charset=UTF-8');
     });
 
     it('should redirect directory w/ slash', async () => {
@@ -219,7 +214,7 @@ describe('request-handler', () => {
       const handler = createRequestHandler(config, sys);
 
       req.headers = {
-        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8'
+        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
       };
       req.url = '/about-us';
 
@@ -238,7 +233,7 @@ describe('request-handler', () => {
       await handler(req, res);
       expect(res.$statusCode).toBe(200);
       expect(res.$content).toContain('aboutus');
-      expect(res.$contentType).toBe('text/html');
+      expect(res.$contentType).toBe('text/html;charset=UTF-8');
     });
 
     it('get directory index.html with trailing slash and base url', async () => {
@@ -252,7 +247,7 @@ describe('request-handler', () => {
       await handler(req, res);
       expect(res.$statusCode).toBe(200);
       expect(res.$content).toContain('aboutus');
-      expect(res.$contentType).toBe('text/html');
+      expect(res.$contentType).toBe('text/html;charset=UTF-8');
     });
 
     it('get directory index.html with trailing slash', async () => {
@@ -265,13 +260,11 @@ describe('request-handler', () => {
       await handler(req, res);
       expect(res.$statusCode).toBe(200);
       expect(res.$content).toContain('aboutus');
-      expect(res.$contentType).toBe('text/html');
+      expect(res.$contentType).toBe('text/html;charset=UTF-8');
     });
-
   });
 
   describe('error not found static files', () => {
-
     it('not find file', async () => {
       const handler = createRequestHandler(config, sys);
 
@@ -280,13 +273,11 @@ describe('request-handler', () => {
       await handler(req, res);
       expect(res.$statusCode).toBe(404);
       expect(res.$content).toContain('/index.html');
-      expect(res.$contentType).toBe('text/plain');
+      expect(res.$contentType).toBe('text/plain;charset=UTF-8');
     });
-
   });
 
   describe('root index', () => {
-
     it('serve directory listing when no index.html', async () => {
       await sys.writeFile(path.join(root, 'www', 'styles.css'), `/* hi */`);
       await sys.writeFile(path.join(root, 'www', 'scripts.js'), `// hi`);
@@ -298,7 +289,7 @@ describe('request-handler', () => {
       await handler(req, res);
       expect(res.$statusCode).toBe(200);
       expect(res.$content).toContain('tmpl-dir');
-      expect(res.$contentType).toBe('text/html');
+      expect(res.$contentType).toBe('text/html;charset=UTF-8');
     });
 
     it('serve root index.html w/ querystring', async () => {
@@ -311,7 +302,7 @@ describe('request-handler', () => {
       await handler(req, res);
       expect(res.$statusCode).toBe(200);
       expect(res.$content).toContain('hello');
-      expect(res.$contentType).toBe('text/html');
+      expect(res.$contentType).toBe('text/html;charset=UTF-8');
     });
 
     it('serve root index.html w/ base url', async () => {
@@ -324,7 +315,7 @@ describe('request-handler', () => {
       await handler(req, res);
       expect(res.$statusCode).toBe(200);
       expect(res.$content).toContain('hello');
-      expect(res.$contentType).toBe('text/html');
+      expect(res.$contentType).toBe('text/html;charset=UTF-8');
     });
 
     it('serve root index.html', async () => {
@@ -336,7 +327,7 @@ describe('request-handler', () => {
       await handler(req, res);
       expect(res.$statusCode).toBe(200);
       expect(res.$content).toContain('hello');
-      expect(res.$contentType).toBe('text/html');
+      expect(res.$contentType).toBe('text/html;charset=UTF-8');
     });
 
     it('302 redirect to / when no path at all', async () => {
@@ -349,11 +340,9 @@ describe('request-handler', () => {
       expect(res.$statusCode).toBe(302);
       expect(res.$headers.location).toBe('/');
     });
-
   });
 
   describe('serve static text files', () => {
-
     it('should load file w/ querystring', async () => {
       await sys.writeFile(path.join(root, 'www', 'scripts', 'file1.html'), `html`);
       const handler = createRequestHandler(config, sys);
@@ -363,7 +352,7 @@ describe('request-handler', () => {
       await handler(req, res);
       expect(res.$statusCode).toBe(200);
       expect(res.$content.split('\n')[0]).toContain('html');
-      expect(res.$contentType).toBe('text/html');
+      expect(res.$contentType).toBe('text/html;charset=UTF-8');
     });
 
     it('should load html file', async () => {
@@ -375,13 +364,11 @@ describe('request-handler', () => {
       await handler(req, res);
       expect(res.$statusCode).toBe(200);
       expect(res.$content.split('\n')[0]).toContain('html');
-      expect(res.$contentType).toBe('text/html');
+      expect(res.$contentType).toBe('text/html;charset=UTF-8');
     });
-
   });
 
   describe('iframe connector', () => {
-
     it('appends to <body>', () => {
       const h = appendDevServerClientIframe(`<html><body>88mph</body></html>`, `<iframe></iframe>`);
       expect(h).toBe(`<html><body>88mph<iframe></iframe></body></html>`);
@@ -396,11 +383,8 @@ describe('request-handler', () => {
       const h = appendDevServerClientIframe(`88mph`, `<iframe></iframe>`);
       expect(h).toBe(`88mph<iframe></iframe>`);
     });
-
   });
-
 });
-
 
 interface TestServerResponse extends http.ServerResponse {
   $statusCode?: number;

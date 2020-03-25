@@ -1,13 +1,15 @@
 import * as d from '../../declarations';
 import { URL } from 'url';
 
-
 export function normalizeHydrateOptions(inputOpts: d.HydrateDocumentOptions) {
-  const outputOpts: d.HydrateFactoryOptions = Object.assign({
-    serializeToHtml: false,
-    destroyWindow: false,
-    destroyDocument: false,
-  }, inputOpts || {});
+  const outputOpts: d.HydrateFactoryOptions = Object.assign(
+    {
+      serializeToHtml: false,
+      destroyWindow: false,
+      destroyDocument: false,
+    },
+    inputOpts || {},
+  );
 
   if (typeof outputOpts.clientHydrateAnnotations !== 'boolean') {
     outputOpts.clientHydrateAnnotations = true;
@@ -23,6 +25,12 @@ export function normalizeHydrateOptions(inputOpts: d.HydrateDocumentOptions) {
 
   if (typeof outputOpts.timeout !== 'number') {
     outputOpts.timeout = 15000;
+  }
+
+  if (Array.isArray(outputOpts.excludeComponents)) {
+    outputOpts.excludeComponents = outputOpts.excludeComponents.filter(c => typeof c === 'string' && c.includes('-')).map(c => c.toLowerCase());
+  } else {
+    outputOpts.excludeComponents = [];
   }
 
   return outputOpts;
@@ -64,14 +72,12 @@ export function generateHydrateResults(opts: d.HydrateDocumentOptions) {
     results.pathname = url.pathname;
     results.search = url.search;
     results.hash = url.hash;
-
   } catch (e) {
     renderCatchError(results, e);
   }
 
   return results;
 }
-
 
 export function renderBuildError(results: d.HydrateResults, msg: string) {
   const diagnostic: d.Diagnostic = {
@@ -81,14 +87,13 @@ export function renderBuildError(results: d.HydrateResults, msg: string) {
     messageText: msg,
     relFilePath: null,
     absFilePath: null,
-    lines: []
+    lines: [],
   };
 
   if (results.pathname) {
     if (results.pathname !== '/') {
       diagnostic.header += ': ' + results.pathname;
     }
-
   } else if (results.url) {
     diagnostic.header += ': ' + results.url;
   }
@@ -97,18 +102,15 @@ export function renderBuildError(results: d.HydrateResults, msg: string) {
   return diagnostic;
 }
 
-
 export function renderCatchError(results: d.HydrateResults, err: any) {
   const diagnostic = renderBuildError(results, null);
 
   if (err != null) {
     if (err.stack != null) {
       diagnostic.messageText = err.stack.toString();
-
     } else {
       if (err.message != null) {
         diagnostic.messageText = err.message.toString();
-
       } else {
         diagnostic.messageText = err.toString();
       }

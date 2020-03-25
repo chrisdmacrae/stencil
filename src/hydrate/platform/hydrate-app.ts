@@ -4,13 +4,12 @@ import { doc, getHostRef, loadModule, plt, registerHost } from '@platform';
 import { proxyHostElement } from './proxy-host-element';
 import { globalScripts } from '@app-globals';
 
-
 export function hydrateApp(
   win: Window,
   opts: d.HydrateFactoryOptions,
   results: d.HydrateResults,
   afterHydrate: (win: Window, opts: d.HydrateFactoryOptions, results: d.HydrateResults, resolve: (results: d.HydrateResults) => void) => void,
-  resolve: (results: d.HydrateResults) => void
+  resolve: (results: d.HydrateResults) => void,
 ) {
   const connectedElements = new Set<any>();
   const createdElements = new Set<HTMLElement>();
@@ -31,7 +30,6 @@ export function hydrateApp(
       }
       win.document.createElement = orgDocumentCreateElement;
       win.document.createElementNS = orgDocumentCreateElementNS;
-
     } catch (e) {
       renderCatchError(opts, results, e);
     }
@@ -49,25 +47,38 @@ export function hydrateApp(
   }
 
   try {
-
     function patchedConnectedCallback(this: d.HostElement) {
       return connectElement(this);
     }
 
     function patchElement(elm: d.HostElement) {
-      const tagName = elm.nodeName.toLowerCase();
-      if (tagName.includes('-')) {
-        const Cstr = loadModule({
-          $tagName$: tagName,
-          $flags$: null,
-        }, null) as d.ComponentConstructor;
+      if (isValidComponent(elm, opts)) {
+        // this element is a valid component
 
-        if (Cstr != null && Cstr.cmpMeta != null) {
-          createdElements.add(elm);
-          elm.connectedCallback = patchedConnectedCallback;
+        const hostRef = getHostRef(elm);
+        if (!hostRef) {
+          // we haven't registered this component's host element yet
 
-          registerHost(elm, Cstr.cmpMeta);
-          proxyHostElement(elm, Cstr.cmpMeta);
+          // get the component's constructor
+          const Cstr = loadModule(
+            {
+              $tagName$: elm.nodeName.toLowerCase(),
+              $flags$: null,
+            },
+            null,
+          ) as d.ComponentConstructor;
+
+          if (Cstr != null && Cstr.cmpMeta != null) {
+            // we found valid component metadata
+            createdElements.add(elm);
+            elm.connectedCallback = patchedConnectedCallback;
+
+            // register the host element
+            registerHost(elm, Cstr.cmpMeta);
+
+            // proxy the host element with the component's metadata
+            proxyHostElement(elm, Cstr.cmpMeta);
+          }
         }
       }
     }
@@ -84,22 +95,28 @@ export function hydrateApp(
 
     function connectElement(elm: HTMLElement) {
       createdElements.delete(elm);
-      if (elm != null && elm.nodeType === 1 && results.hydratedCount < opts.maxHydrateCount && shouldHydrate(elm)) {
-        const tagName = elm.nodeName.toLowerCase();
 
-        if (tagName.includes('-') && !connectedElements.has(elm)) {
+      if (isValidComponent(elm, opts) && results.hydratedCount < opts.maxHydrateCount) {
+        // this is a valid component to hydrate
+        // and we haven't hit our max hydrated count yet
+
+        if (!connectedElements.has(elm) && shouldHydrate(elm)) {
+          // we haven't connected this component yet
+          // and all of its ancestor elements are valid too
+
+          // add it to our Set so we know it's already being connected
           connectedElements.add(elm);
-          return hydrateComponent(win, results, tagName, elm);
+          return hydrateComponent(win, results, elm.nodeName, elm);
         }
       }
+
       return resolved;
     }
 
     function waitLoop(): Promise<void> {
       const toConnect = Array.from(createdElements).filter(elm => elm.parentElement);
       if (toConnect.length > 0) {
-        return Promise.all(toConnect.map(connectElement))
-          .then(waitLoop);
+        return Promise.all(toConnect.map(connectElement)).then(waitLoop);
       }
       return resolved;
     }
@@ -128,18 +145,20 @@ export function hydrateApp(
     waitLoop()
       .then(hydratedComplete)
       .catch(hydratedError);
-
   } catch (e) {
     hydratedError(e);
   }
 }
 
-
 async function hydrateComponent(win: Window, results: d.HydrateResults, tagName: string, elm: d.HostElement) {
-  const Cstr = loadModule({
-    $tagName$: tagName,
-    $flags$: null,
-  }, null) as d.ComponentConstructor;
+  tagName = tagName.toLowerCase();
+  const Cstr = loadModule(
+    {
+      $tagName$: tagName,
+      $flags$: null,
+    },
+    null,
+  ) as d.ComponentConstructor;
 
   if (Cstr != null) {
     const cmpMeta = Cstr.cmpMeta;
@@ -168,6 +187,21 @@ async function hydrateComponent(win: Window, results: d.HydrateResults, tagName:
   }
 }
 
+function isValidComponent(elm: Element, opts: d.HydrateFactoryOptions) {
+  if (elm != null && elm.nodeType === 1) {
+    // playing it safe and not using elm.tagName or elm.localName on purpose
+    const tagName = elm.nodeName;
+    if (typeof tagName === 'string' && tagName.includes('-')) {
+      if (opts.excludeComponents.includes(tagName.toLowerCase())) {
+        // this tagName we DO NOT want to hydrate
+        return false;
+      }
+      // all good, this is a valid component
+      return true;
+    }
+  }
+  return false;
+}
 
 function shouldHydrate(elm: Element): boolean {
   if (elm.nodeType === 9) {
@@ -187,22 +221,7 @@ function shouldHydrate(elm: Element): boolean {
   return shouldHydrate(parentNode as Element);
 }
 
-const NO_HYDRATE_TAGS = new Set([
-  'CODE',
-  'HEAD',
-  'IFRAME',
-  'INPUT',
-  'OBJECT',
-  'OUTPUT',
-  'NOSCRIPT',
-  'PRE',
-  'SCRIPT',
-  'SELECT',
-  'STYLE',
-  'TEMPLATE',
-  'TEXTAREA'
-]);
-
+const NO_HYDRATE_TAGS = new Set(['CODE', 'HEAD', 'IFRAME', 'INPUT', 'OBJECT', 'OUTPUT', 'NOSCRIPT', 'PRE', 'SCRIPT', 'SELECT', 'STYLE', 'TEMPLATE', 'TEXTAREA']);
 
 function renderCatchError(opts: d.HydrateFactoryOptions, results: d.HydrateResults, err: any) {
   const diagnostic: d.Diagnostic = {
@@ -212,7 +231,7 @@ function renderCatchError(opts: d.HydrateFactoryOptions, results: d.HydrateResul
     messageText: '',
     relFilePath: null,
     absFilePath: null,
-    lines: []
+    lines: [],
   };
 
   if (opts.url) {

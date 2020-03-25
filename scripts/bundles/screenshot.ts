@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
 import { join } from 'path';
-import nodeResolve from 'rollup-plugin-node-resolve';
-import commonjs from 'rollup-plugin-commonjs';
+import rollupCommonjs from '@rollup/plugin-commonjs';
+import rollupNodeResolve from '@rollup/plugin-node-resolve';
 import { aliasPlugin } from './plugins/alias-plugin';
 import { gracefulFsPlugin } from './plugins/graceful-fs-plugin';
 import { replacePlugin } from './plugins/replace-plugin';
@@ -9,15 +9,12 @@ import { BuildOptions } from '../utils/options';
 import { writePkgJson } from '../utils/write-pkg-json';
 import { RollupOptions } from 'rollup';
 
-
 export async function screenshot(opts: BuildOptions) {
   const inputScreenshotDir = join(opts.transpiledDir, 'screenshot');
 
   // copy @stencil/core/screenshot/index.d.ts
-  await fs.copy(
-    inputScreenshotDir,
-    opts.output.screenshotDir,
-    { filter: f => {
+  await fs.copy(inputScreenshotDir, opts.output.screenshotDir, {
+    filter: f => {
       if (f.endsWith('.d.ts')) {
         return true;
       }
@@ -25,8 +22,8 @@ export async function screenshot(opts: BuildOptions) {
         return fs.statSync(f).isDirectory();
       } catch (e) {}
       return false;
-    } }
-  );
+    },
+  });
 
   // write @stencil/core/screenshot/package.json
   writePkgJson(opts, opts.output.screenshotDir, {
@@ -34,27 +31,10 @@ export async function screenshot(opts: BuildOptions) {
     description: 'Stencil Screenshot.',
     main: 'index.js',
     types: 'index.d.ts',
-    files: [
-      "compare/",
-      "index.js",
-      "connector.js",
-      "local-connector.js",
-      "pixel-match.js",
-    ]
+    files: ['compare/', 'index.js', 'connector.js', 'local-connector.js', 'pixel-match.js'],
   });
 
-  const external = [
-    'assert',
-    'buffer',
-    'fs',
-    'os',
-    'path',
-    'process',
-    'stream',
-    'url',
-    'util',
-    'zlib',
-  ];
+  const external = ['assert', 'buffer', 'fs', 'os', 'path', 'process', 'stream', 'url', 'util', 'zlib'];
 
   const screenshotBundle: RollupOptions = {
     input: join(inputScreenshotDir, 'index.js'),
@@ -67,12 +47,12 @@ export async function screenshot(opts: BuildOptions) {
     plugins: [
       gracefulFsPlugin(),
       aliasPlugin(opts),
-      nodeResolve({
-        preferBuiltins: false
+      rollupNodeResolve({
+        preferBuiltins: false,
       }),
-      commonjs(),
+      rollupCommonjs(),
       replacePlugin(opts),
-    ]
+    ],
   };
 
   const pixelMatchBundle: RollupOptions = {
@@ -85,16 +65,13 @@ export async function screenshot(opts: BuildOptions) {
     external,
     plugins: [
       aliasPlugin(opts),
-      nodeResolve({
-        preferBuiltins: false
+      rollupNodeResolve({
+        preferBuiltins: false,
       }),
-      commonjs(),
+      rollupCommonjs(),
       replacePlugin(opts),
-    ]
+    ],
   };
 
-  return [
-    screenshotBundle,
-    pixelMatchBundle,
-  ];
+  return [screenshotBundle, pixelMatchBundle];
 }

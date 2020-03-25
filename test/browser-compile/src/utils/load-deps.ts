@@ -1,28 +1,24 @@
 
 export const loadDeps = async (resolveLookup: Map<string, string>, fs: Map<string, string>) => {
   resolveLookup.set('@stencil/core/internal/client', '/@stencil/core/internal/client/index.mjs');
-  resolveLookup.set('@stencil/core/internal/client/build-conditionals', '/@stencil/core/internal/client/build-conditionals.mjs');
+  resolveLookup.set('@stencil/core/internal/app-data', '/@stencil/core/internal/app-data/index.mjs');
 
   await loadDep('/@stencil/core/compiler/stencil.js');
 
-  const deps = stencil.dependencies.map((dep: any) => {
-    return loadDep(`https://cdn.jsdelivr.net/npm/${dep.name}@${dep.version}${dep.main}`);
-  });
+  const tsDep = stencil.dependencies.find((dep: any) => dep.name === 'typescript');
+  const rollupDep = stencil.dependencies.find((dep: any) => dep.name === 'rollup');
 
-  deps.push(
-    loadDep('https://cdn.jsdelivr.net/npm/rollup@1.19.3/dist/rollup.browser.js'),
-    loadDep('https://cdn.jsdelivr.net/npm/terser@4.1.3/dist/bundle.min.js')
-  );
-
-  const depPromises = Promise.all(deps);
-
+  const depPromises = Promise.all([
+    loadDep(`https://cdn.jsdelivr.net/npm/typescript@${tsDep.version}${tsDep.main}`),
+    loadDep(`https://cdn.jsdelivr.net/npm/rollup@${rollupDep.version}/dist/rollup.browser.js`),
+  ]);
 
   const fetchResults = await Promise.all([
-    // await fetch('/@stencil/core/internal/client/index.mjs'),
-    // await fetch('/@stencil/core/internal/client/build-conditionals.mjs'),
-    // await fetch('/@stencil/core/internal/client/css-shim.stencil-client.mjs'),
-    // await fetch('/@stencil/core/internal/client/dom.stencil-client.mjs'),
-    // await fetch('/@stencil/core/internal/client/shadow-css.stencil-client.mjs'),
+    await fetch('/@stencil/core/internal/client/index.mjs'),
+    await fetch('/@stencil/core/internal/client/shadow-css.mjs'),
+    await fetch('/@stencil/core/internal/app-data/index.mjs'),
+    await fetch('/@stencil/core/internal/client/css-shim.mjs'),
+    await fetch('/@stencil/core/internal/client/dom.mjs'),
   ]);
 
   await Promise.all(fetchResults.map(async r => {

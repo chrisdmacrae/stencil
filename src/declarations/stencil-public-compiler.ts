@@ -122,13 +122,13 @@ export interface StencilConfig {
   srcDir?: string;
 
   /**
-   * Passes custom configuration down to the "rollup-plugin-commonjs" that Stencil uses under the hood.
+   * Passes custom configuration down to the "@rollup/plugin-commonjs" that Stencil uses under the hood.
    * For further information: https://stenciljs.com/docs/module-bundling
    */
   commonjs?: BundlingConfig;
 
   /**
-   * Passes custom configuration down to the "rollup-plugin-node-resolve" that Stencil uses under the hood.
+   * Passes custom configuration down to the "@rollup/plugin-node-resolve" that Stencil uses under the hood.
    * For further information: https://stenciljs.com/docs/module-bundling
    */
   nodeResolve?: NodeResolveConfig;
@@ -177,20 +177,28 @@ export interface StencilConfig {
    */
   extras?: ConfigExtras;
 
+  /**
+   * The hydrated flag identifies if a component and all of its child components
+   * have finished hydrating. This helps prevent any flash of unstyled content (FOUC)
+   * as various components are asynchronously downloaded and rendered. By default it
+   * will add the `hydrated` CSS class to the element. The `hydratedFlag` confg can be used
+   * to change the name of the CSS class, change it to an attribute, or change which
+   * type of CSS properties and values are assigned before and after hydrating. This config
+   * can also be used to not include the hydrated flag at all by setting it to `null`.
+   */
+  hydratedFlag?: HydratedFlag;
+
   globalScript?: string;
   srcIndexHtml?: string;
   watch?: boolean;
   testing?: TestingConfig;
   maxConcurrentWorkers?: number;
-  /**
-   * @deprecated
-   */
-  maxConcurrentTasksPerWorker?: number;
   preamble?: string;
   /**
    * @deprecated Use the "include" option in "tsconfig.json"
    */
   includeSrc?: string[];
+  rollupPlugins?: {before?: any[], after?: any[]};
 
   entryComponentsHint?: string[];
   buildDist?: boolean;
@@ -199,13 +207,12 @@ export interface StencilConfig {
   devInspector?: boolean;
   devServer?: StencilDevServerConfig;
   enableCacheStats?: boolean;
-  sys?: StencilSystem;
-  sys_next?: CompilerSystem;
+  sys?: CompilerSystem;
   tsconfig?: string;
   validateTypes?: boolean;
   watchIgnoredRegex?: RegExp;
   excludeUnusedDependencies?: boolean;
-
+  typescriptPath?: string;
   stencilCoreResolvedId?: string;
 }
 
@@ -213,13 +220,14 @@ export interface ConfigExtras {
   /**
    * By default, the slot polyfill does not update `appendChild()` so that it appends
    * new child nodes into the correct child slot like how shadow dom works. This is an opt-in
-   * polyfill for those who need it.
+   * polyfill for those who need it. Defaults to `false`.
    */
   appendChildSlotFix?: boolean;
 
   /**
    * By default, the runtime does not polyfill `cloneNode()` when cloning a component
    * that uses the slot polyfill. This is an opt-in polyfill for those who need it.
+   * Defaults to `false`.
    */
   cloneNodeFix?: boolean;
 
@@ -230,27 +238,91 @@ export interface ConfigExtras {
   cssVarsShim?: boolean;
 
   /**
-   * Dispatches component lifecycle events. Mainly used for testing.
+   * Dynamic `import()` shim. This is only needed for Edge 18 and below, and Firefox 67 and below.
+   * Defaults to `true`.
+   */
+  dynamicImportShim?: boolean;
+
+  /**
+   * Dispatches component lifecycle events. Mainly used for testing. Defaults to `false`.
    */
   lifecycleDOMEvents?: boolean;
+
+  /**
+   * Safari 10 supports ES modules with `<script type="module">`, however, it did not implement
+   * `<script nomodule>`. When set to `false`, the runtime will not patch support for Safari 10.
+   * Defaults to `true`.
+   */
+  safari10?: boolean;
+
+  /**
+   * It is possible to assign data to the actual `<script>` element's `data-opts` property,
+   * which then gets passed to Stencil's initial bootstrap. This feature is only required
+   * for very special cases and rarely needed. When set to `false` it will not read
+   * this data. Defaults to `true`.
+   */
+  scriptDataOpts?: boolean;
+
+  /**
+   * If enabled `true`, the runtime will check if the shadow dom shim is required. However,
+   * if it's determined that shadow dom is already natively supported by the browser then
+   * it does not request the shim. Setting to `false` will avoid all shadow dom tests.
+   * Defaults to `true`.
+   */
+  shadowDomShim?: boolean;
+
+  /**
+   * For browsers that do not support shadow dom (IE11 and Edge 18 and below), slot is polyfilled
+   * to simulate the same behavior. However, the host element's `childNodes` and `children`
+   * getters are not patched to only show the child nodes and elements of the default slot.
+   * Defaults to `false`.
+   */
+  slotChildNodesFix?: boolean;
 }
 
 export interface Config extends StencilConfig {
   buildAppCore?: boolean;
+  buildDocs?: boolean;
   configPath?: string;
   cwd?: string;
   writeLog?: boolean;
-  rollupPlugins?: any[];
   devServer?: DevServerConfig;
   flags?: ConfigFlags;
   fsNamespace?: string;
-  logLevel?: 'error'|'warn'|'info'|'debug'|string;
+  logLevel?: 'error' | 'warn' | 'info' | 'debug' | string;
   rootDir?: string;
+  packageJsonFilePath?: string;
   sourceMap?: boolean;
   suppressLogs?: boolean;
   profile?: boolean;
+  tsCompilerOptions?: any;
   _isValidated?: boolean;
   _isTesting?: boolean;
+}
+
+export interface HydratedFlag {
+  /**
+   * Defaults to `hydrated`.
+   */
+  name?: string;
+  /**
+   * Can be either `class` or `attribute`. Defaults to `class`.
+   */
+  selector?: 'class' | 'attribute';
+  /**
+   * Defaults to use CSS `visibility` property.
+   */
+  property?: string;
+  /**
+   * This is the CSS value to give all components before it has been hydrated.
+   * Defaults to `hidden`.
+   */
+  initialValue?: string;
+  /**
+   * This is the CSS value to assign once a component has finished hydrating.
+   * Defaults to `inherit`.
+   */
+  hydratedValue?: string;
 }
 
 export interface StencilDevServerConfig {
@@ -262,6 +334,14 @@ export interface StencilDevServerConfig {
    * Base path to be used by the server. Defaults to the root pathname.
    */
   basePath?: string;
+  /**
+   * EXPERIMENTAL!
+   * During development, node modules can be independently requested and bundled, making for
+   * faster build times. This is only available using the Stencil Dev Server throughout
+   * development. Production builds and builds with the `es5` flag will override
+   * this setting to `false`. Default is `false`.
+   */
+  experimentalDevModules?: boolean;
   /**
    * If the dev server should respond with gzip compressed content. Defaults to `true`.
    */
@@ -380,6 +460,7 @@ export interface CompilerSystem {
    * SYNC! Always returns a boolean, does not throw.
    */
   accessSync(p: string): boolean;
+  cacheStorage?: CacheStorage;
   copy?(copyTasks: Required<CopyTask>[], srcDir: string): Promise<CopyResults>;
   /**
    * Always returns a boolean if the files were copied or not. Does not throw.
@@ -395,6 +476,12 @@ export interface CompilerSystem {
   createWorkerController?(compilerPath: string, maxConcurrentWorkers: number): WorkerMainController;
   encodeToBase64(str: string): string;
   /**
+   * Optionally provide a fetch() function rather than using the built-in fetch().
+   * First arg is a url string or Request object (RequestInfo).
+   * Second arg is the RequestInit. Returns the Response object
+   */
+  fetch?(input: string | any, init?: any): Promise<any>;
+  /**
    * Generates a MD5 digest encoded as HEX
    */
   generateContentHash?(content: string, length?: number): Promise<string>;
@@ -407,6 +494,15 @@ export interface CompilerSystem {
    */
   getCompilerExecutingPath(): string;
   /**
+   * Aync glob task. Only available in NodeJS compiler system.
+   */
+  glob?(pattern: string, options: { cwd?: string; nodir?: boolean; [key: string]: any }): Promise<string[]>;
+  /**
+   * Tests if the path is a symbolic link or not. Always resolves a boolean. Does not throw.
+   */
+  isSymbolicLink(p: string): Promise<boolean>;
+  lazyRequire?: LazyRequire;
+  /**
    * Always returns a boolean if the directory was created or not. Does not throw.
    */
   mkdir(p: string, opts?: CompilerSystemMakeDirectoryOptions): Promise<boolean>;
@@ -414,6 +510,10 @@ export interface CompilerSystem {
    * SYNC! Always returns a boolean if the directory was created or not. Does not throw.
    */
   mkdirSync(p: string, opts?: CompilerSystemMakeDirectoryOptions): boolean;
+  /**
+   * Normalize file system path.
+   */
+  normalizePath(p: string): string;
   /**
    * All return paths are full normalized paths, not just the file names. Always returns an array, does not throw.
    */
@@ -485,7 +585,7 @@ export interface CompilerSystem {
 
 export interface WorkerMainController {
   send(...args: any[]): Promise<any>;
-  handler(name: string): ((...args: any[]) => Promise<any>);
+  handler(name: string): (...args: any[]) => Promise<any>;
   destroy(): void;
 }
 
@@ -623,7 +723,19 @@ export interface CompilerBuildStart {
 
 export type CompilerFileWatcherCallback = (fileName: string, eventKind: CompilerFileWatcherEvent) => void;
 
-export type CompilerFileWatcherEvent = CompilerEventFileAdd | CompilerEventFileDelete | CompilerEventFileUpdate;
+export type CompilerFileWatcherEvent = CompilerEventFileAdd | CompilerEventFileDelete | CompilerEventFileUpdate | CompilerEventDirAdd | CompilerEventDirDelete;
+
+export type CompilerEventName =
+  | CompilerEventFsChange
+  | CompilerEventFileUpdate
+  | CompilerEventFileAdd
+  | CompilerEventFileDelete
+  | CompilerEventDirAdd
+  | CompilerEventDirDelete
+  | CompilerEventBuildStart
+  | CompilerEventBuildFinish
+  | CompilerEventBuildNoChange
+  | CompilerEventBuildLog;
 
 export type CompilerEventFsChange = 'fsChange';
 export type CompilerEventFileUpdate = 'fileUpdate';
@@ -636,18 +748,6 @@ export type CompilerEventBuildFinish = 'buildFinish';
 export type CompilerEventBuildLog = 'buildLog';
 export type CompilerEventBuildNoChange = 'buildNoChange';
 
-export type CompilerEventName =
-  CompilerEventFsChange |
-  CompilerEventFileUpdate |
-  CompilerEventFileAdd |
-  CompilerEventFileDelete |
-  CompilerEventDirAdd |
-  CompilerEventDirDelete |
-  CompilerEventBuildStart |
-  CompilerEventBuildFinish |
-  CompilerEventBuildNoChange |
-  CompilerEventBuildLog;
-
 export interface CompilerFileWatcher {
   close(): void;
 }
@@ -657,6 +757,9 @@ export interface CompilerFsStats {
   isDirectory(): boolean;
   isSymbolicLink(): boolean;
   size: number;
+  mtime?: {
+    getTime(): number;
+  };
 }
 
 export interface CompilerSystemMakeDirectoryOptions {
@@ -877,7 +980,7 @@ export interface JestConfig {
   testRunner?: string;
   testURL?: string;
   timers?: string;
-  transform?: {[key: string]: string };
+  transform?: { [key: string]: string };
   transformIgnorePatterns?: any[];
   unmockedModulePathPatterns?: any[];
   verbose?: boolean;
@@ -995,9 +1098,7 @@ export interface EmulateConfig {
   viewport?: EmulateViewport;
 }
 
-
 export interface EmulateViewport {
-
   /**
    * Page width in pixels.
    */
@@ -1030,6 +1131,7 @@ export interface EmulateViewport {
 }
 
 export interface Logger {
+  colors?: boolean;
   level: string;
   debug(...msg: any[]): void;
   info(...msg: any[]): void;
@@ -1046,6 +1148,7 @@ export interface Logger {
   gray(msg: string): string;
   bold(msg: string): string;
   dim(msg: string): string;
+  bgRed(msg: string): string;
   buildLogFilePath: string;
   writeLogs(append: boolean): void;
 }
@@ -1099,6 +1202,7 @@ export interface OutputTargetDistLazy extends OutputTargetBase {
   cjsIndexFile?: string;
   systemLoaderFile?: string;
   legacyLoaderFile?: string;
+  empty?: boolean;
 }
 
 export interface OutputTargetDistGlobalStyles extends OutputTargetBase {
@@ -1118,7 +1222,6 @@ export interface OutputTargetDistLazyLoader extends OutputTargetBase {
   empty: boolean;
 }
 
-
 export interface OutputTargetDistSelfContained extends OutputTargetBase {
   type: 'dist-self-contained';
 
@@ -1127,7 +1230,6 @@ export interface OutputTargetDistSelfContained extends OutputTargetBase {
 
   empty?: boolean;
 }
-
 
 export interface OutputTargetHydrate extends OutputTargetBase {
   type: 'dist-hydrate-script';
@@ -1152,8 +1254,8 @@ export interface OutputTargetDocsVscode extends OutputTargetBase {
 
 export interface OutputTargetDocsReadme extends OutputTargetBase {
   type: 'docs-readme' | 'docs';
-
   dir?: string;
+  dependencies?: boolean;
   footer?: string;
   strict?: boolean;
 }
@@ -1202,11 +1304,9 @@ export interface OutputTargetBase {
   type: string;
 }
 
-export type OutputTargetBuild =
- | OutputTargetDistCollection
- | OutputTargetDistLazy;
+export type OutputTargetBuild = OutputTargetDistCollection | OutputTargetDistLazy;
 
- export interface OutputTargetAngular extends OutputTargetBase {
+export interface OutputTargetAngular extends OutputTargetBase {
   type: 'angular';
 
   componentCorePackage: string;
@@ -1297,30 +1397,36 @@ export interface OutputTargetWww extends OutputTargetBase {
    */
   prerenderConfig?: string;
 
-  serviceWorker?: ServiceWorkerConfig | null;
+  /**
+   * Service worker config for production builds. During development builds
+   * service worker script will be injected to automatically unregister existing
+   * service workers. When set to `false` neither a service worker registration
+   * or unregistration will be added to the index.html.
+   */
+  serviceWorker?: ServiceWorkerConfig | null | false;
   appDir?: string;
 }
 
 export type OutputTarget =
- | OutputTargetAngular
- | OutputTargetCopy
- | OutputTargetCustom
- | OutputTargetDist
- | OutputTargetDistCollection
- | OutputTargetDistCustomElements
- | OutputTargetDistCustomElementsBundle
- | OutputTargetDistLazy
- | OutputTargetDistGlobalStyles
- | OutputTargetDistLazyLoader
- | OutputTargetDistSelfContained
- | OutputTargetDocsJson
- | OutputTargetDocsCustom
- | OutputTargetDocsReadme
- | OutputTargetDocsVscode
- | OutputTargetWww
- | OutputTargetHydrate
- | OutputTargetStats
- | OutputTargetDistTypes;
+  | OutputTargetAngular
+  | OutputTargetCopy
+  | OutputTargetCustom
+  | OutputTargetDist
+  | OutputTargetDistCollection
+  | OutputTargetDistCustomElements
+  | OutputTargetDistCustomElementsBundle
+  | OutputTargetDistLazy
+  | OutputTargetDistGlobalStyles
+  | OutputTargetDistLazyLoader
+  | OutputTargetDistSelfContained
+  | OutputTargetDocsJson
+  | OutputTargetDocsCustom
+  | OutputTargetDocsReadme
+  | OutputTargetDocsVscode
+  | OutputTargetWww
+  | OutputTargetHydrate
+  | OutputTargetStats
+  | OutputTargetDistTypes;
 
 export interface ServiceWorkerConfig {
   // https://developers.google.com/web/tools/workbox/modules/workbox-build#full_generatesw_config
@@ -1329,8 +1435,8 @@ export interface ServiceWorkerConfig {
   swDest?: string;
   swSrc?: string;
   globPatterns?: string[];
-  globDirectory?: string|string[];
-  globIgnores?: string|string[];
+  globDirectory?: string | string[];
+  globIgnores?: string | string[];
   templatedUrls?: any;
   maximumFileSizeToCacheInBytes?: number;
   manifestTransforms?: any;
@@ -1359,6 +1465,7 @@ export interface LoadConfigInit {
    * within the root directory.
    */
   initTsConfig?: boolean;
+  typescriptPath?: string;
 }
 
 export interface LoadConfigResults {
@@ -1366,7 +1473,7 @@ export interface LoadConfigResults {
   diagnostics: Diagnostic[];
   tsconfig: {
     compilerOptions: any;
-  }
+  };
 }
 
 export interface Diagnostic {
@@ -1390,57 +1497,7 @@ export interface Diagnostic {
   }[];
 }
 
-export interface StencilSystem {
-  cancelWorkerTasks?(): void;
-  compiler?: {
-    name: string;
-    version: string;
-    typescriptVersion?: string;
-    runtime?: string;
-    packageDir?: string;
-    distDir?: string;
-  };
-  copy?(copyTasks: Required<CopyTask>[], srcDir: string): Promise<CopyResults>;
-  color?: any;
-  cloneDocument?(doc: Document): Document;
-  createFsWatcher?(config: Config, fs: FileSystem, events: BuildEvents): Promise<FsWatcher>;
-  createDocument?(html: string): Document;
-  destroy?(): void;
-  addDestroy?(fn: Function): void;
-  details?: SystemDetails;
-  encodeToBase64?(str: string): string;
-  fs?: FileSystem;
-  generateContentHash?(content: string, length: number): Promise<string>;
-  getLatestCompilerVersion?(logger: Logger, forceCheck: boolean): Promise<string>;
-  getClientPath?(staticName: string): string;
-  getClientCoreFile?(opts: {staticName: string}): Promise<string>;
-  glob?(pattern: string, options: {
-    cwd?: string;
-    nodir?: boolean;
-  }): Promise<string[]>;
-  initWorkers?(maxConcurrentWorkers: number, maxConcurrentTasksPerWorker: number, logger: Logger): WorkerOptions;
-  lazyRequire?: LazyRequire;
-  loadConfigFile?(configPath: string, process?: any): Config;
-  minifyJs?(input: string, opts?: any): Promise<{
-    output: string;
-    sourceMap?: any;
-    diagnostics?: Diagnostic[];
-  }>;
-  nextTick?(cb: Function): void;
-  open?: (url: string, opts?: any) => Promise<void>;
-  optimizeCss?(inputOpts: OptimizeCssInput): Promise<OptimizeCssOutput>;
-  path?: Path;
-  prerenderUrl?: (prerenderRequest: PrerenderRequest) => Promise<PrerenderResults>;
-  resolveModule?(fromDir: string, moduleId: string, opts?: ResolveModuleOptions): string;
-  rollup?: RollupInterface;
-  scopeCss?: (cssText: string, scopeId: string, commentOriginalSelector: boolean) => Promise<string>;
-  serializeNodeToHtml?(elm: Element | Document): string;
-  storage?: Storage;
-  transpileToEs5?(cwd: string, input: string, inlineHelpers: boolean): Promise<any>;
-  validateTypes?(compilerOptions: any, emitDtsFiles: boolean, collectionNames: string[], rootTsFiles: string[], isDevMode: boolean): Promise<any>;
-}
-
-export interface Storage {
+export interface CacheStorage {
   get(key: string): Promise<any>;
   set(key: string, value: any): Promise<void>;
 }
@@ -1479,34 +1536,38 @@ export interface PrerenderRequest {
   componentGraphPath: string;
   devServerHostUrl: string;
   hydrateAppFilePath: string;
+  isDebug: boolean;
   prerenderConfigPath: string;
   templateId: string;
   url: string;
   writeToFilePath: string;
 }
 
-export interface Path {
-  basename(p: string, ext?: string): string;
-  dirname(p: string): string;
-  extname(p: string): string;
-  isAbsolute(p: string): boolean;
-  join(...paths: string[]): string;
-  parse(pathString: string): { root: string; dir: string; base: string; ext: string; name: string; };
-  relative(from: string, to: string): string;
-  resolve(...pathSegments: any[]): string;
-  sep: string;
-}
-
 export interface OptimizeCssInput {
-  css: string;
-  filePath: string;
-  autoprefixer: any;
-  minify: boolean;
+  input: string;
+  filePath?: string;
+  autoprefixer?: any;
+  minify?: boolean;
+  sourceMap?: boolean;
 }
 
 export interface OptimizeCssOutput {
-  css: string;
-  diagnostics?: Diagnostic[];
+  output: string;
+  diagnostics: Diagnostic[];
+}
+
+export interface OptimizeJsInput {
+  input: string;
+  filePath?: string;
+  target?: 'es5' | 'latest';
+  pretty?: boolean;
+  sourceMap?: boolean;
+}
+
+export interface OptimizeJsOutput {
+  output: string;
+  sourceMap: any;
+  diagnostics: Diagnostic[];
 }
 
 export interface LazyRequire {
@@ -1523,25 +1584,6 @@ export interface FsWatcher {
 
 export interface FsWatcherItem {
   close(): void;
-}
-
-export interface FileSystem {
-  access(path: string): Promise<void>;
-  copyFile(src: string, dest: string): Promise<void>;
-  createReadStream(filePath: string): any;
-  existsSync(filePath: string): boolean;
-  mkdir(dirPath: string, opts?: MakeDirectoryOptions): Promise<void>;
-  mkdirSync(dirPath: string): void;
-  readdir(dirPath: string): Promise<string[]>;
-  readdirSync(dirPath: string): string[];
-  readFile(filePath: string, format?: string): Promise<string>;
-  readFileSync(filePath: string, format?: string): string;
-  rmdir(dirPath: string): Promise<void>;
-  stat(path: string): Promise<FsStats>;
-  statSync(path: string): FsStats;
-  unlink(filePath: string): Promise<void>;
-  writeFile(filePath: string, content: string, opts?: FsWriteOptions): Promise<void>;
-  writeFileSync(filePath: string, content: string, opts?: FsWriteOptions): void;
 }
 
 export interface MakeDirectoryOptions {

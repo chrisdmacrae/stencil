@@ -1,10 +1,11 @@
 import * as d from '@stencil/core/internal';
+import { BUILD } from '@app-data';
 import { expectExtend } from '../matchers';
-import { setupGlobal, teardownGlobal } from '@mock-doc';
+import { setupGlobal, teardownGlobal } from '@stencil/core/mock-doc';
 import { setupMockFetch } from '../mock-fetch';
 import { HtmlSerializer } from './jest-serializer';
 import { resetBuildConditionals } from '../reset-build-conditionals';
-
+import { resetPlatform, stopAutoApplyChanges, modeResolutionChain } from '@stencil/core/internal/testing';
 
 declare const global: d.JestEnvironmentGlobal;
 
@@ -19,20 +20,17 @@ export function jestSetupTestFramework() {
   setupMockFetch(global);
 
   beforeEach(() => {
-    const bc = require('@stencil/core/internal/app-data');
-    const testingPlatform = require('@stencil/core/internal/platform');
-
     // reset the platform for this new test
-    testingPlatform.resetPlatform();
-    resetBuildConditionals(bc.BUILD);
+    resetPlatform();
+    resetBuildConditionals(BUILD);
+    modeResolutionChain.length = 0;
   });
 
   afterEach(async () => {
     if (global.__CLOSE_OPEN_PAGES__) {
       await global.__CLOSE_OPEN_PAGES__();
     }
-    const testingPlatform = require('@stencil/core/internal/platform');
-    testingPlatform.stopAutoApplyChanges();
+    stopAutoApplyChanges();
 
     teardownGlobal(global);
     global.Context = {};
@@ -44,7 +42,7 @@ export function jestSetupTestFramework() {
     jasmineEnv.addReporter({
       specStarted: (spec: any) => {
         global.currentSpec = spec;
-      }
+      },
     });
   }
 
@@ -54,7 +52,7 @@ export function jestSetupTestFramework() {
 
   if (typeof env.__STENCIL_DEFAULT_TIMEOUT__ === 'string') {
     const time = parseInt(env.__STENCIL_DEFAULT_TIMEOUT__, 10);
-    jest.setTimeout(time);
+    jest.setTimeout(time * 1.5);
     jasmine.DEFAULT_TIMEOUT_INTERVAL = time;
   }
 }

@@ -1,15 +1,13 @@
 import { MockResponse, mockFetch, newSpecPage, MockHeaders } from '@stencil/core/testing';
 import { Component, Prop, Host, h } from '@stencil/core';
 
-
 describe('fetch', () => {
-
   afterEach(() => {
     mockFetch.reset();
   });
 
   @Component({
-    tag: 'cmp-a'
+    tag: 'cmp-a',
   })
   class CmpA {
     @Prop() data: string;
@@ -39,15 +37,18 @@ describe('fetch', () => {
       return (
         <Host>
           <ul>
-            {this.headers.map(n => <li>{n}</li>)}
+            {this.headers.map(n => (
+              <li>{n}</li>
+            ))}
           </ul>
-          {this.names ?
+          {this.names ? (
             <ul>
-              {this.names.map(n => <li>{n}</li>)}
-            </ul> :
-            null
-          }
-          {(this.text ? <p>{this.text}</p> : null)}
+              {this.names.map(n => (
+                <li>{n}</li>
+              ))}
+            </ul>
+          ) : null}
+          {this.text ? <p>{this.text}</p> : null}
         </Host>
       );
     }
@@ -58,14 +59,14 @@ describe('fetch', () => {
 
     const page = await newSpecPage({
       components: [CmpA],
-      html: `<cmp-a data="hillvalley.json"></cmp-a>`
+      html: `<cmp-a data="hillvalley.json"></cmp-a>`,
     });
 
     expect(page.root).toEqualHtml(`
       <cmp-a data="hillvalley.json">
         <ul>
           <li>
-            Content-Type: application/json
+            content-type: application/json
           </li>
         </ul>
         <ul>
@@ -82,14 +83,14 @@ describe('fetch', () => {
 
     const page = await newSpecPage({
       components: [CmpA],
-      html: `<cmp-a data="hazzard.json"></cmp-a>`
+      html: `<cmp-a data="hazzard.json"></cmp-a>`,
     });
 
     expect(page.root).toEqualHtml(`
       <cmp-a data="hazzard.json">
         <ul>
           <li>
-            Content-Type: application/json
+            content-type: application/json
           </li>
         </ul>
         <ul>
@@ -106,14 +107,14 @@ describe('fetch', () => {
 
     const page = await newSpecPage({
       components: [CmpA],
-      html: `<cmp-a data="hazzard.json"></cmp-a>`
+      html: `<cmp-a data="hazzard.json"></cmp-a>`,
     });
 
     expect(page.root).toEqualHtml(`
       <cmp-a data="hazzard.json">
       <ul>
         <li>
-          Content-Type: application/json
+          content-type: application/json
         </li>
       </ul>
         <ul>
@@ -129,24 +130,24 @@ describe('fetch', () => {
       url: '/hillvalley.txt',
       headers: new MockHeaders([
         ['Content-Type', 'text/plain'],
-        ['Access-Control-Allow-Origin', '*']
-      ])
+        ['Access-Control-Allow-Origin', '*'],
+      ]),
     });
     mockFetch.response(res);
 
     const page = await newSpecPage({
       components: [CmpA],
-      html: `<cmp-a data="hillvalley.txt"></cmp-a>`
+      html: `<cmp-a data="hillvalley.txt"></cmp-a>`,
     });
 
     expect(page.root).toEqualHtml(`
       <cmp-a data="hillvalley.txt">
         <ul>
           <li>
-            Content-Type: text/plain
+            content-type: text/plain
           </li>
           <li>
-            Access-Control-Allow-Origin: *
+            access-control-allow-origin: *
           </li>
         </ul>
         <p>
@@ -156,19 +157,17 @@ describe('fetch', () => {
     `);
   });
 
-
   it('404', async () => {
-
     const page = await newSpecPage({
       components: [CmpA],
-      html: `<cmp-a data="no-findy.txt"></cmp-a>`
+      html: `<cmp-a data="no-findy.txt"></cmp-a>`,
     });
 
     expect(page.root).toEqualHtml(`
       <cmp-a data="no-findy.txt">
         <ul>
           <li>
-            Content-Type: text/plain
+            content-type: text/plain
           </li>
         </ul>
         <p>
@@ -178,4 +177,13 @@ describe('fetch', () => {
     `);
   });
 
+  it('global Request/Response/Headers should work', () => {
+    const headers = new Headers();
+    headers.set('x-header', 'value');
+    const request = new Request('http://testing.stenciljs.com/some-url', {
+      headers,
+    });
+    expect(request.url).toBe('http://testing.stenciljs.com/some-url');
+    expect(request.headers.get('x-header')).toBe('value');
+  });
 });

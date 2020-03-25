@@ -1,7 +1,6 @@
 import { CssNode, SerializeCssOptions, SerializeOpts } from './css-parse-declarations';
 import { getCssSelectors } from './get-css-selectors';
 
-
 export const serializeCss = (stylesheet: CssNode, serializeOpts: SerializeCssOptions) => {
   const usedSelectors = serializeOpts.usedSelectors || null;
   const opts: SerializeOpts = {
@@ -13,14 +12,18 @@ export const serializeCss = (stylesheet: CssNode, serializeOpts: SerializeCssOpt
   };
 
   const rules = stylesheet.rules;
+
   if (!rules) {
     return '';
   }
   const rulesLen = rules.length;
+  const out: string[] = [];
 
-  return rules
-    .map((rule, i) => serializeCssVisitNode(opts, rule, i, rulesLen))
-    .join('');
+  for (let i = 0; i < rulesLen; i++) {
+    out.push(serializeCssVisitNode(opts, rules[i], i, rulesLen));
+  }
+
+  return out.join('');
 };
 
 const serializeCssVisitNode = (opts: SerializeOpts, node: CssNode, index: number, len: number) => {
@@ -32,7 +35,11 @@ const serializeCssVisitNode = (opts: SerializeOpts, node: CssNode, index: number
     return serializeCssRule(opts, node);
   }
   if (nodeType === 'comment') {
-    return '';
+    if (node.comment[0] === '!') {
+      return `/*${node.comment}*/`;
+    } else {
+      return '';
+    }
   }
   if (nodeType === 'media') {
     return serializeCssMedia(opts, node);
@@ -89,7 +96,7 @@ const serializeCssRule = (opts: SerializeOpts, node: CssNode) => {
 
     for (i = selectors.length - 1; i >= 0; i--) {
       const sel = getCssSelectors(selectors[i]);
-      include = true
+      include = true;
 
       // classes
       let jlen = sel.classNames.length;
@@ -151,10 +158,22 @@ const serializeCssRule = (opts: SerializeOpts, node: CssNode) => {
     return '';
   }
 
-  return `${node.selectors.map(removeSelectorWhitespace)}{${serializeCssMapVisit(opts, decls)}}`;
+  const cleanedSelectors: string[] = [];
+  let cleanedSelector = '';
+  for (const selector of node.selectors) {
+    cleanedSelector = removeSelectorWhitespace(selector);
+    if (!cleanedSelectors.includes(cleanedSelector)) {
+      cleanedSelectors.push(cleanedSelector);
+    }
+  }
+
+  return `${cleanedSelectors}{${serializeCssMapVisit(opts, decls)}}`;
 };
 
 const serializeCssDeclaration = (node: CssNode, index: number, len: number) => {
+  if (node.value === '') {
+    return '';
+  }
   if (len - 1 === index) {
     return node.property + ':' + node.value;
   }
@@ -166,7 +185,7 @@ const serializeCssMedia = (opts: SerializeOpts, node: CssNode) => {
   if (mediaCss === '') {
     return '';
   }
-  return '@media ' + removeSelectorWhitespace(node.media) + '{' + mediaCss + '}';
+  return '@media ' + removeMediaWhitespace(node.media) + '{' + mediaCss + '}';
 };
 
 const serializeCssKeyframes = (opts: SerializeOpts, node: CssNode) => {
@@ -245,7 +264,26 @@ const removeSelectorWhitespace = (selector: string) => {
         continue;
       }
       rtn += ' ';
+    } else {
+      rtn += char;
+    }
+  }
 
+  return rtn;
+};
+
+const removeMediaWhitespace = (media: string) => {
+  let rtn = '';
+  let char = '';
+  media = media.trim();
+
+  for (let i = 0, l = media.length; i < l; i++) {
+    char = media[i];
+    if (CSS_WS_REG.test(char)) {
+      if (CSS_WS_REG.test(rtn[rtn.length - 1])) {
+        continue;
+      }
+      rtn += ' ';
     } else {
       rtn += char;
     }

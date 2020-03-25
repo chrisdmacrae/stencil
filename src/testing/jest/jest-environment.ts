@@ -2,11 +2,8 @@ import { E2EProcessEnv, JestEnvironmentGlobal } from '@stencil/core/internal';
 import { connectBrowser, disconnectBrowser, newBrowserPage } from '../puppeteer/puppeteer-browser';
 import NodeEnvironment from 'jest-environment-node';
 
-
 export function createJestPuppeteerEnvironment() {
-
   const JestEnvironment = class extends (NodeEnvironment as any) {
-
     global: JestEnvironmentGlobal;
     browser: any = null;
     pages: any[] = [];
@@ -32,15 +29,13 @@ export function createJestPuppeteerEnvironment() {
       this.pages.push(page);
       const env: E2EProcessEnv = process.env;
       if (typeof env.__STENCIL_DEFAULT_TIMEOUT__ === 'string') {
-        page.setDefaultTimeout(parseInt(env.__STENCIL_DEFAULT_TIMEOUT__, 10) * 0.5);
+        page.setDefaultTimeout(parseInt(env.__STENCIL_DEFAULT_TIMEOUT__, 10));
       }
       return page;
     }
 
     async closeOpenPages() {
-      await Promise.all(
-        this.pages.map(page => page.close())
-      );
+      await Promise.all(this.pages.map(page => page.close()));
       this.pages.length = 0;
     }
 
@@ -51,7 +46,6 @@ export function createJestPuppeteerEnvironment() {
       this.browser = null;
     }
   };
-
 
   return JestEnvironment;
 }
